@@ -1,0 +1,16 @@
+.edit_button {
+    background-color: #0B60B0;
+    color: white;
+    padding: 6px;
+    border-radius: 2rem;
+    font-size: 30px;
+    position: absolute;
+    top: -1%;
+    right: -1%;
+    transition: background-color 0.3s ease
+}
+
+.edit_button:hover {
+    cursor: pointer;
+    background-color: #3468C0;
+}

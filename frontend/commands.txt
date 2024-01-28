@@ -1,0 +1,7 @@
+git init --initial-branch=main
+git remote add origin <URL>
+git add .
+git commit -m ""
+git push --set-upstream origin main
+03041116008 
+042111266563 BOOKEDME
