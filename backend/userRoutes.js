@@ -79,7 +79,7 @@ router.post(END_POINT.SIGN_UP, async (req, res) => {
     }
 
     // Check if the user already exists
-    const foundUser = await USER.find({name: username});
+    const foundUser = await USER.find({name: username.toLowerCase()});
     console.log('Found people:', foundUser);
 
     if (foundUser.length > 0) {
@@ -96,7 +96,7 @@ router.post(END_POINT.SIGN_UP, async (req, res) => {
         // Insert user into the database
         try {
             const savedPerson = await new USER({
-                name: username,
+                name: username.toLowerCase(),
                 password: hashedPassword,
                 role: 'NORMAL_USER',
             }).save();
