@@ -85,7 +85,7 @@ router.post(END_POINT.SIGN_UP, async (req, res) => {
 
     // Check if the user already exists
     const foundUser = await USER.find({name: username.toLowerCase()});
-    const foundUserByEmail = await USER.findOne({email: email.toLowerCase()});
+    const foundUserByEmail = await USER.find({email: email});
     // console.log('Found people:', foundUser);
 
     if (foundUser.length > 0 || foundUserByEmail.length > 0) {
