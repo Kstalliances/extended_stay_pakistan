@@ -68,3 +68,23 @@ export const SignUp = (userData) => {
         .post('/create-user', userData)
         .then(response => response.data);
 }
+
+export const GetAboutUs = () => {
+    return myAxios.get('/about')
+        .then(response => response.data);
+}
+
+export const GetAboutUsById = (id) => {
+    return myAxios.get(`/about/${id}`)
+        .then(response => response.data);
+}
+
+export const UpdateAboutUs = (id, description, alignment) => {
+    return myAxios.put(`/about/${id}`, {description, alignment})
+        .then(response => response.data);
+}
+
+export const GetUsers = () => {
+    return myAxios.get('/users')
+        .then(response => response.data);
+}

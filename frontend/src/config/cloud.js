@@ -2,8 +2,8 @@ import axios from "axios";
 import {getToken} from "../service/userservice";
 
 
-// const BASE_URL = "https://jealous-tux-crab.cyclic.app/api/room-book";
-const BASE_URL = "http://localhost:4000/api/room-book";
+const BASE_URL = "https://plum-anxious-eel.cyclic.app/api/room-book";
+// const BASE_URL = "http://localhost:4000/api/room-book";
 
 export const myAxios = axios.create({
     baseURL: BASE_URL,

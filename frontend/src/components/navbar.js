@@ -66,6 +66,15 @@ export const Navbar5 = () => {
             </div>
             <Collapse isOpen={isOpen} navbar>
                 <Nav className="me-auto navbar-nav ml-5 mb-2 mb-lg-0" navbar/>
+                <Nav className="navbar-nav ml-5 mb-2 mb-lg-0">
+                    <NavItem className="nav-link">
+                        <NavLink tag={ReactLink} to="/about">
+                            About Us
+                        </NavLink>
+                    </NavItem>
+                </Nav>
+
+                {/* Login and sign up */}
                 {!login && (
                     <Nav className="navbar-nav ml-5 mb-2 mb-lg-0">
                         <NavItem>
@@ -80,18 +89,18 @@ export const Navbar5 = () => {
                         </NavItem>
                     </Nav>
                 )}
+
+                {/* Admin can see => Add Room / Booked Rooms / Users */}
                 {login && (
                     <>
-                        <Nav className="navbar-nav ml-5 mb-2 mb-lg-0" style={{marginLeft: '8px'}}>
-                            {/*<NavItem>*/}
-                            {/*    <NavLink id="link" tag={ReactLink} to="/" onClick={logout} className="nav-link">*/}
-                            {/*        Logout*/}
-                            {/*    </NavLink>*/}
-                            {/*</NavItem>*/}
-
-
+                        <Nav className="navbar-nav ml-2 mb-2 mb-lg-0">
                             {isAdmin && (
                                 <>
+                                    <NavItem>
+                                        <NavLink id="link" tag={ReactLink} to="/user/users" className="nav-link">
+                                            Users
+                                        </NavLink>
+                                    </NavItem>
                                     <NavItem>
                                         <NavLink id="link" tag={ReactLink} to="/user/settings" className="nav-link">
                                             Booked Rooms
@@ -119,57 +128,9 @@ export const Navbar5 = () => {
                                     {user}
                                 </NavLink>
                             </NavItem>
-
-                            {/*/!*    Dropdown     *!/*/}
-                            {/*<UncontrolledDropdown nav>*/}
-                            {/*    <DropdownToggle*/}
-                            {/*        // className="d-flex justify-content-center align-content-center align-items-center"*/}
-                            {/*        nav caret>*/}
-                            {/*        <i*/}
-                            {/*            className="bi bi-person-circle"*/}
-                            {/*            style={{marginRight: 7}}*/}
-                            {/*        ></i>*/}
-                            {/*        {user?.name}*/}
-                            {/*        User*/}
-                            {/*    </DropdownToggle>*/}
-                            {/*    <DropdownMenu id="NavBarMenu2">*/}
-                            {/*        /!*{isAdmin && (*!/*/}
-                            {/*        /!*    <DropdownItem*!/*/}
-                            {/*        /!*        id="drop-down6"*!/*/}
-                            {/*        /!*        onClick={navigateToBookedRoomsPage}*!/*/}
-                            {/*        /!*    >*!/*/}
-                            {/*        /!*        <i*!/*/}
-                            {/*        /!*            className="bi bi-person-badge"*!/*/}
-                            {/*        /!*            style={{marginRight: 7}}*!/*/}
-                            {/*        /!*        ></i>*!/*/}
-                            {/*        /!*        Booked Rooms*!/*/}
-                            {/*        /!*    </DropdownItem>*!/*/}
-                            {/*        /!*)}*!/*/}
-                            {/*        /!*{isAdmin && (*!/*/}
-                            {/*        /!*    <DropdownItem*!/*/}
-                            {/*        /!*        id="drop-down8"*!/*/}
-                            {/*        /!*        onClick={navigateToAddRoomPage}*!/*/}
-                            {/*        /!*    >*!/*/}
-                            {/*        /!*        <i*!/*/}
-                            {/*        /!*            className="bi bi-person-plus"*!/*/}
-                            {/*        /!*            style={{marginRight: 7, fontSize: 15}}*!/*/}
-                            {/*        /!*        ></i>*!/*/}
-                            {/*        /!*        Add Room*!/*/}
-                            {/*        /!*    </DropdownItem>*!/*/}
-                            {/*        /!*)}*!/*/}
-                            {/*        <DropdownItem id="signout" onClick={logout}>*/}
-                            {/*            <i*/}
-                            {/*                className="bi bi-box-arrow-right"*/}
-                            {/*                style={{marginRight: 7, fontSize: 15}}*/}
-                            {/*            ></i>*/}
-                            {/*            Sign out*/}
-                            {/*        </DropdownItem>*/}
-                            {/*    </DropdownMenu>*/}
-                            {/*</UncontrolledDropdown>*/}
                         </Nav>
                     </>
-                )
-                }
+                )}
             </Collapse>
         </Navbar>
     )
