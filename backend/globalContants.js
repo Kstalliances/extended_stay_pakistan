@@ -19,7 +19,9 @@ const URL_ENDPOINT = {
     CHECK_IS_ROOM_BOOKED: "/booking-status/:roomId",
     GET_ROOM_RESERVED_DATES: '/rooms/dates/:roomId',
     GET_LIST_OF_ROOM_DATE: '/list/room/date/:roomId',
-    ACC_DETAIL: '/account-details'
+    ACC_DETAIL: '/account-details',
+    ABOUT_US: '/about',
+    ABOUT: '/about/:id'
 };
 
 module.exports = URL_ENDPOINT;
