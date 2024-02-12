@@ -4,9 +4,9 @@
     padding: 6px;
     border-radius: 2rem;
     font-size: 30px;
-    position: absolute;
-    top: -1%;
-    right: -1%;
+    /*position: relative;*/
+    /*top: 48%;*/
+    /*right: 0;*/
     transition: background-color 0.3s ease
 }
 

@@ -1,15 +1,18 @@
 import "./App.css";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
-import {LoginPage} from "./components/LoginPage";
-import Home from "./components/Home";
-import {Registration} from "./components/Register";
-import MoreDetailComponent from "./components/MoreDetail";
-import {BookingPage} from "./components/BookingPage";
-import CustomSwitcher from "./testing/CustomSwitcher";
+import {LoginPage} from "./components/user/LoginPage";
+import Home from "./components/post/Home";
+import {Registration} from "./components/user/Register";
+import MoreDetailComponent from "./components/post/MoreDetail";
+import {BookingPage} from "./components/post/BookingPage";
 import PrivateRoutes from "./components/PrivateRoutes";
-import {AddRoom} from "./components/AddRoom";
-import {UpdateRoom} from "./components/UpdateRoom";
+import {AddRoom} from "./components/post/AddRoom";
+import {UpdateRoom} from "./components/post/UpdateRoom";
 import {ToastContainer} from "react-toastify";
+import {AboutUs} from "./components/post/AboutUs";
+import {UpdateAbout} from "./components/UpdateAbout";
+import ListOfBookedRooms from "./components/user/ListOfBookedRooms";
+import {Users} from "./components/user/Users";
 
 function App() {
     // const {t} = useTranslation();
@@ -24,9 +27,12 @@ function App() {
                     <Route path="/signup" element={<Registration/>}/>
                     <Route path="/room-detail/:roomId" element={<MoreDetailComponent/>}/>
                     <Route path="/booking/:roomId" element={<BookingPage/>}/>
+                    <Route path="/about" element={<AboutUs/>}/>
+                    <Route path="/about/:aboutUsId" element={<UpdateAbout/>}/>
                     <Route path="/user" element={<PrivateRoutes/>}>
-                        <Route path="settings" element={<CustomSwitcher/>}/>
+                        <Route path="settings" element={<ListOfBookedRooms/>}/>
                         <Route path="add-room" element={<AddRoom/>}/>
+                        <Route path="users" element={<Users/>}/>
                         <Route path="update-room/:roomId" element={<UpdateRoom/>}/>
                     </Route>
 
