@@ -1,4 +1,6 @@
 const {v2: cloudinary} = require("cloudinary");
+const util = require('util');
+const destroyAsync = util.promisify(cloudinary.uploader.destroy);
 
 // METHOD FOR UPLOAD IMAGE TO CLOUD
 async function UploadToCloudinary(fileBuffer) {
@@ -21,4 +23,16 @@ async function UploadToCloudinary(fileBuffer) {
     }
 }
 
-module.exports = {UploadToCloudinary};
+async function DeleteImage(publicId) {
+    try {
+        if (publicId) {
+            // Delete existing image from Cloudinary
+            const result = await destroyAsync(publicId);
+            console.log('IMAGE DELETED SUCCESSFULLY:', result);
+        }
+    } catch (error) {
+        console.error('ERROR DELETING IMAGE:', error);
+    }
+}
+
+module.exports = {UploadToCloudinary, DeleteImage};

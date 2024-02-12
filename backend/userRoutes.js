@@ -41,7 +41,12 @@ router.post(END_POINT.LOGIN, async (req, res) => {
 
     try {
         // Check if the user exists
-        const user = await USER.findOne({name: username.toLowerCase()});
+        const user = await USER.findOne({
+            $or: [
+                {name: username.toLowerCase()},
+                {email: username.toLowerCase()}
+            ]
+        });
 
         if (!user) {
             // User not found
@@ -71,7 +76,7 @@ router.post(END_POINT.LOGIN, async (req, res) => {
 
 // API to create user
 router.post(END_POINT.SIGN_UP, async (req, res) => {
-    const {username, password} = req.body;
+    const {username, email, phone, password} = req.body;
 
     // Check if username and password are provided
     if (!username || !password) {
@@ -80,9 +85,10 @@ router.post(END_POINT.SIGN_UP, async (req, res) => {
 
     // Check if the user already exists
     const foundUser = await USER.find({name: username.toLowerCase()});
-    console.log('Found people:', foundUser);
+    const foundUserByEmail = await USER.findOne({email: email.toLowerCase()});
+    // console.log('Found people:', foundUser);
 
-    if (foundUser.length > 0) {
+    if (foundUser.length > 0 || foundUserByEmail.length > 0) {
         return res.status(409).json({status: false, error: 'User already exists'});
     }
 
@@ -97,6 +103,8 @@ router.post(END_POINT.SIGN_UP, async (req, res) => {
         try {
             const savedPerson = await new USER({
                 name: username.toLowerCase(),
+                email: email,
+                phone: phone,
                 password: hashedPassword,
                 role: 'NORMAL_USER',
             }).save();
@@ -153,11 +161,19 @@ router.put(END_POINT.FORGOT_PASSWORD, verifyToken, async (req, res) => {
 // GET ALL USER API
 router.get(END_POINT.USERS, async (req, res) => {
     // Fetch all users from the database
+    console.log('===== GET ALL USERS =====');
     try {
         // Fetch all users with selected fields (id, username, role)
-        const users = await USER.find({}, '_id name role');
+        const users = await USER.find();
+        const userCount = await USER.countDocuments();
 
-        res.status(200).json({status: true, data: users});
+        // Add count field to each user object
+        const usersWithCount = users.map((user, index) => ({
+            ...user.toObject(),
+            count: index + 1
+        }));
+
+        res.status(200).json({status: true, total_users: userCount, data: usersWithCount});
     } catch (err) {
         console.error('Error fetching users:', err);
         res.status(500).json({error: 'Error fetching users'});
@@ -202,19 +218,19 @@ router.get(END_POINT.GET_BOOKED_ROOMS, async (req, res) => {
             data: dataWithCount,
         });
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({error: error.message});
     }
 });
 
 router.put(END_POINT.APPROVE_PAYMENT, async (req, res) => {
 
     console.log(new Date(), "===== Approve payment Request =====")
-    const {userId, roomId, status} = req.body;
-    console.log(`${userId} ${roomId} ${status}`)
+    const {userId, roomId, status, checkInDate, checkOutDate} = req.body;
+    console.log(`${userId} ${roomId} ${status} ${checkInDate} ${checkOutDate}`)
 
     try {
         const updatedBooking = await BOOKED_ROOMS.updateOne(
-            {user_id: userId, room_id: roomId},
+            {user_id: userId, room_id: roomId, start_date: checkInDate, end_date: checkOutDate},
             {$set: {payment_status: status}}
         );
 

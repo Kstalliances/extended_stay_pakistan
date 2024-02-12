@@ -10,14 +10,29 @@ const ROOM_DETAIL = require("./schemas/room_detail");
 const ROOM_PRICE = require("./schemas/room_price");
 const BOOKED_ROOMS = require("./schemas/booked_rooms");
 const USER = require("./schemas/user");
+const ABOUT = require("./schemas/about");
 const mongoose = require("mongoose");
-const {UploadToCloudinary} = require("./CloudinaryService");
+const {UploadToCloudinary, DeleteImage} = require("./CloudinaryService");
 
 // Configure Cloudinary
 cloudinary.config({
     cloud_name: "dyhuht5kj",
     api_key: "637927817868136",
     api_secret: "SHWcKEFwziwWJxupOTKU8BZ7U7k",
+});
+
+// zaman
+// cloudinary.config({
+//     cloud_name: 'du8cfubr9',
+//     api_key: '742255532794584',
+//     api_secret: 'vRoWxubXnFd7IEfDCLV_kB1SuOE'
+// });
+
+// zunairpri@gmail.com
+cloudinary.config({
+    cloud_name: 'du8cfubr9',
+    api_key: '742255532794584',
+    api_secret: 'vRoWxubXnFd7IEfDCLV_kB1SuOE'
 });
 
 // Configure Multer for handling file uploads
@@ -47,11 +62,11 @@ const verifyToken = (req, res, next) => {
 };
 
 // ADD ROOM POST API
-router.post(END_POINT.ADD_ROOM, verifyToken, upload.single('image'), async (req, res) => {
+router.post(END_POINT.ADD_ROOM, verifyToken, upload.array('image', 3), async (req, res) => {
         console.log(new Date(), "===== POST REQUEST RECEIVED =====");
 
         try {
-            const file = req.file;
+            const files = req.files;
             const userId = req.params.userId;
 
             const {
@@ -60,7 +75,7 @@ router.post(END_POINT.ADD_ROOM, verifyToken, upload.single('image'), async (req,
                 room_service, washing, total_rooms, room_type
             } = req.body;
 
-            if (!file) {
+            if (!files || files.length === 0) {
                 errorResponse(res, 400, 'No file uploaded');
             }
 
@@ -69,42 +84,50 @@ router.post(END_POINT.ADD_ROOM, verifyToken, upload.single('image'), async (req,
                 errorResponse(res, 400, 'Enter the required data');
             }
 
-            const fileBuffer = UploadToCloudinary(file.buffer)
-                .then(async (result, publicId, imageUrl) => {
+            const uploadPromises = files.map(file =>
+                UploadToCloudinary(file.buffer)
+                    .then(result => {
+                        return {
+                            room_img_url: result.imageUrl,
+                            room_img_public_id: result.publicId,
+                        };
+                    })
+                    .catch(error => {
+                        console.error('ERROR UPLOADING FILE TO CLOUDINARY:', error);
+                        throw error; // Propagate the error
+                    })
+            );
 
-                    console.log('FILE UPLOADED SUCCESSFULLY TO CLOUDINARY:', result);
+            const images = await Promise.all(uploadPromises);
 
-                    const room = new ROOM({
-                        room_img_url: result.imageUrl,
-                        room_img_public_id: result.publicId,
-                        description: description,
-                        dimensions: dimensions,
-                        location: location,
-                        google_map: google_map,
-                        contact_name: contact_name,
-                        contact_no: contact_no,
-                        user_id: userId,
-                        utility_charges: utility_charges,
-                        additional_person_charges: additional_person_charges,
-                        charge_per_unit: charge_per_unit,
-                        wifi: wifi,
-                        car_parking: car_parking,
-                        meals: meals,
-                        attached_bath: attached_bath,
-                        room_service: room_service,
-                        washing: washing,
-                        total_rooms: total_rooms,
-                        room_type: room_type,
-                    });
+            console.log('FILE UPLOADED SUCCESSFULLY TO CLOUDINARY: ', images);
 
-                    const savedRoom = await room.save();
+            const room = new ROOM({
+                images: images,
+                description: description,
+                dimensions: dimensions,
+                location: location,
+                google_map: google_map,
+                contact_name: contact_name,
+                contact_no: contact_no,
+                user_id: userId,
+                utility_charges: utility_charges,
+                additional_person_charges: additional_person_charges,
+                charge_per_unit: charge_per_unit,
+                wifi: wifi,
+                car_parking: car_parking,
+                meals: meals,
+                attached_bath: attached_bath,
+                room_service: room_service,
+                washing: washing,
+                total_rooms: total_rooms,
+                room_type: room_type,
+            });
 
-                    console.log("ROOM ADDED WITH ID: ", savedRoom._id);
-                    sucessResponse(res, result);
-                })
-                .catch((error) => {
-                    console.error('ERROR UPLOADING FILE TO CLOUDINARY:', error);
-                });
+            const savedRoom = await room.save();
+
+            console.log("ROOM ADDED WITH ID: ", savedRoom._id);
+            sucessResponse(res, savedRoom);
 
         } catch (error) {
             console.log(`EXCEPTION: ${error}`);
@@ -119,8 +142,11 @@ router.get(END_POINT.GET_ROOMS, async (req, res) => {
     console.log(new Date(), ' ===== GET ROOM DETAIL REQUEST =====');
 
     try {
-        const allRooms = await ROOM.find();
-        sucessResponse(res, allRooms);
+        const rooms = await ROOM.find();
+        res.status(200).json({
+            status: true,
+            data: rooms,
+        });
     } catch (error) {
         console.error('ERROR FETCHING ROOMS:', error);
         errorResponse(res, 500, 'Internal server error');
@@ -206,79 +232,131 @@ router.delete(END_POINT.DELETE_USER_ROOM, verifyToken, (req, res) => {
 });
 
 // UPDATE ROOM POST BY USER API
-router.put(END_POINT.UPDATE_USER_ROOM, verifyToken, upload.single('image'), async (req, res) => {
+router.put(
+    END_POINT.UPDATE_USER_ROOM,
+    verifyToken,
+    upload.array('image', 3),
+    async (req, res) => {
         console.log(new Date(), ' ======= UPDATE ROOM REQUEST RECEIVED =======');
         // Parameters
-        const file = req.file;
+        const files = req.files;
         const roomId = req.params.roomId;
         const userId = req.params.userId;
         let imageUrl;
 
-        console.log(`USER_ID: ${userId} ROOM_ID: ${roomId}`)
-        let publicId = req.body.room_img_public_id;
+        console.log(`USER_ID: ${userId} ROOM_ID: ${roomId}`);
+        let publicIds = req.body.room_img_public_ids;
 
         // Request body
         const {
-            description, dimensions, location, google_map, contact_name, contact_no, utility_charges,
-            additional_person_charges, charge_per_unit, wifi, car_parking, meals, attached_bath,
-            room_service, washing, total_rooms, room_type
+            description,
+            dimensions,
+            location,
+            google_map,
+            contact_name,
+            contact_no,
+            utility_charges,
+            additional_person_charges,
+            charge_per_unit,
+            wifi,
+            car_parking,
+            meals,
+            attached_bath,
+            room_service,
+            washing,
+            total_rooms,
+            room_type,
         } = req.body;
 
         try {
-            // If a new file is provided, update image on Cloudinary
-            if (file) {
-
-                try {
-                    if (publicId) {
-                        // Delete existing image from Cloudinary
-                        cloudinary.uploader.destroy(publicId, (error, result) => {
-                            if (error) {
-                                console.error('ERROR DELETING IMAGE:', error);
-                            } else {
-                                console.log('IMAGE DELETED SUCCESSFULLY:', result);
-                            }
-                        });
+            // If new files are provided, update images on Cloudinary
+            if (files && files.length > 0) {
+                if (publicIds && publicIds.length > 0) {
+                    // Delete old images from Cloudinary
+                    const arrayOfValues = publicIds.split(',');
+                    for (const publicId of arrayOfValues) {
+                        await DeleteImage(publicId);
                     }
-                } catch (error) {
-                    console.error('ERROR DELETING IMAGE:', error);
-                    res.status(400).json({status: false, error: 'Error deleting room'});
                 }
 
-                const fileBuffer = UploadToCloudinary(file.buffer)
-                    .then(async (result) => {
+                // Delete images field from DB
+                const updatedRoom = await ROOM.findOneAndUpdate(
+                    {_id: roomId},
+                    {$unset: {images: ""}},
+                    {new: true}
+                );
+                if (updatedRoom) {
+                    console.log('Successfully removed the images field from the room document.');
+                } else {
+                    console.log('Room document not found.');
+                }
 
-                        console.log('FILE UPLOADED SUCCESSFULLY TO CLOUDINARY:', result);
 
-                        console.log(`IMAGE_URL: ${result.imageUrl} PUBLIC_ID: ${result.publicId}`);
+                // Upload new images to Cloudinary
+                const uploadPromises = files.map((file) => {
+                    return UploadToCloudinary(file.buffer)
+                        .then((result) => {
+                            // console.log('FILE UPLOADED SUCCESSFULLY TO CLOUDINARY:', result);
+                            // console.log(`IMAGE_URL: ${result.imageUrl} PUBLIC_ID: ${result.publicId}`);
+                            return {
+                                room_img_url: result.imageUrl,
+                                room_img_public_id: result.publicId,
+                            };
+                        })
+                        .catch((error) => {
+                            console.error('ERROR UPLOADING FILE TO CLOUDINARY:', error);
+                            throw error;
+                        });
+                });
 
-                        const body = {
-                            description: description,
-                            dimensions: dimensions,
-                            location: location,
-                            google_map: google_map,
-                            contact_name: contact_name,
-                            contact_no: contact_no,
-                            user_id: userId,
-                            utility_charges: utility_charges,
-                            additional_person_charges: additional_person_charges,
-                            charge_per_unit: charge_per_unit,
-                            wifi: wifi,
-                            car_parking: car_parking,
-                            meals: meals,
-                            attached_bath: attached_bath,
-                            room_service: room_service,
-                            washing: washing,
-                            total_rooms: total_rooms,
-                            room_type: room_type,
-                            room_img_url: result.imageUrl,
-                            room_img_public_id: result.publicId
-                        }
+                // Wait for all images to be uploaded
+                const images = await Promise.all(uploadPromises);
 
-                        const savedRoom = await ROOM.updateOne({_id: roomId}, body);
-                    })
-                    .catch((error) => {
-                        console.error('ERROR UPLOADING FILE TO CLOUDINARY:', error);
-                    });
+                // Now you can use the array of uploaded images in your logic
+                console.log('UPLOADED IMAGES:', images);
+
+                const body = {
+                    description: description,
+                    dimensions: dimensions,
+                    location: location,
+                    google_map: google_map,
+                    contact_name: contact_name,
+                    contact_no: contact_no,
+                    user_id: userId,
+                    utility_charges: utility_charges,
+                    additional_person_charges: additional_person_charges,
+                    charge_per_unit: charge_per_unit,
+                    wifi: wifi,
+                    car_parking: car_parking,
+                    meals: meals,
+                    attached_bath: attached_bath,
+                    room_service: room_service,
+                    washing: washing,
+                    total_rooms: total_rooms,
+                    room_type: room_type,
+                }
+
+                const updateQuery = {};
+                if (body) {
+                    updateQuery.$set = body;
+                }
+                if (images && images.length > 0) {
+                    updateQuery.$push = {images: {$each: images}};
+                }
+
+                console.log('Update query: ', updateQuery);
+
+                const updateRoom = await ROOM.findOneAndUpdate(
+                    {_id: roomId},
+                    updateQuery,
+                    {new: true}
+                );
+                if (updateRoom) {
+                    console.log('Successfully updated the room document.');
+                } else {
+                    console.log('Room document not found.');
+                }
+
             } else {
                 const body = {
                     description: description,
@@ -300,20 +378,114 @@ router.put(END_POINT.UPDATE_USER_ROOM, verifyToken, upload.single('image'), asyn
                     total_rooms: total_rooms,
                     room_type: room_type
                 }
-
-                const savedRoom = await ROOM.updateOne({_id: roomId}, body);
+                await ROOM.updateOne({_id: roomId}, body);
             }
 
             console.log(`ROOM UPDATED FOR USER: ${userId}`);
             res.status(200).json({success: true, data: 'Record updated successfully!'});
-        } catch
-            (error) {
+
+        } catch (error) {
             console.error('ERROR UPDATING ROOM:', error);
             res.status(500).json({error: 'Error updating room'});
         }
     }
-)
-;
+);
+
+// router.put(END_POINT.UPDATE_USER_ROOM, verifyToken, upload.array('image', 3), async (req, res) => {
+//         console.log(new Date(), ' ======= UPDATE ROOM REQUEST RECEIVED =======');
+//         // Parameters
+//         const file = req.file;
+//         const roomId = req.params.roomId;
+//         const userId = req.params.userId;
+//         let imageUrl;
+//
+//         console.log(`USER_ID: ${userId} ROOM_ID: ${roomId}`)
+//         let publicId = req.body.room_img_public_id;
+//
+//         // Request body
+//         const {
+//             description, dimensions, location, google_map, contact_name, contact_no, utility_charges,
+//             additional_person_charges, charge_per_unit, wifi, car_parking, meals, attached_bath,
+//             room_service, washing, total_rooms, room_type
+//         } = req.body;
+//
+//         try {
+//             // If a new file is provided, update image on Cloudinary
+//             if (file) {
+//
+//                 if (publicId) {
+//                     await DeleteImage(publicId);
+//                 }
+//
+//                 const fileBuffer = await UploadToCloudinary(file.buffer)
+//                     .then(async (result) => {
+//
+//                         console.log('FILE UPLOADED SUCCESSFULLY TO CLOUDINARY:', result);
+//
+//                         console.log(`IMAGE_URL: ${result.imageUrl} PUBLIC_ID: ${result.publicId}`);
+//
+//                         const body = {
+//                             description: description,
+//                             dimensions: dimensions,
+//                             location: location,
+//                             google_map: google_map,
+//                             contact_name: contact_name,
+//                             contact_no: contact_no,
+//                             user_id: userId,
+//                             utility_charges: utility_charges,
+//                             additional_person_charges: additional_person_charges,
+//                             charge_per_unit: charge_per_unit,
+//                             wifi: wifi,
+//                             car_parking: car_parking,
+//                             meals: meals,
+//                             attached_bath: attached_bath,
+//                             room_service: room_service,
+//                             washing: washing,
+//                             total_rooms: total_rooms,
+//                             room_type: room_type,
+//                             room_img_url: result.imageUrl,
+//                             room_img_public_id: result.publicId
+//                         }
+//
+//                         const savedRoom = await ROOM.updateOne({_id: roomId}, body);
+//                     })
+//                     .catch((error) => {
+//                         console.error('ERROR UPLOADING FILE TO CLOUDINARY:', error);
+//                     });
+//             } else {
+//                 const body = {
+//                     description: description,
+//                     dimensions: dimensions,
+//                     location: location,
+//                     google_map: google_map,
+//                     contact_name: contact_name,
+//                     contact_no: contact_no,
+//                     user_id: userId,
+//                     utility_charges: utility_charges,
+//                     additional_person_charges: additional_person_charges,
+//                     charge_per_unit: charge_per_unit,
+//                     wifi: wifi,
+//                     car_parking: car_parking,
+//                     meals: meals,
+//                     attached_bath: attached_bath,
+//                     room_service: room_service,
+//                     washing: washing,
+//                     total_rooms: total_rooms,
+//                     room_type: room_type
+//                 }
+//
+//                 const savedRoom = await ROOM.updateOne({_id: roomId}, body);
+//             }
+//
+//             console.log(`ROOM UPDATED FOR USER: ${userId}`);
+//             res.status(200).json({success: true, data: 'Record updated successfully!'});
+//         } catch
+//             (error) {
+//             console.error('ERROR UPDATING ROOM:', error);
+//             res.status(500).json({error: 'Error updating room'});
+//         }
+//     }
+// );
 
 
 router.post('/upload', upload.array('images', 5), async (req, res) => {
@@ -372,14 +544,18 @@ router.post(END_POINT.CALCULATE_ROOM_RATE, verifyToken, async (req, res) => {
 
         const start = new Date(startDate);
         const end = new Date(endDate);
-        const numberOfDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+        let numberOfDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
         console.log(numberOfDays);
         let query;
+        if (numberOfDays === 0) {
+            numberOfDays = 1;
+        }
+        console.log(numberOfDays);
 
         // Build the Mongoose query based on the number of days
-        if (numberOfDays > 0 && numberOfDays <= 7) {
+        if (numberOfDays >= 0 && numberOfDays <= 7) {
             query = 7;
-            const roomPriceDetail = await ROOM_PRICE.findOne({days: numberOfDays});
+            // const roomPriceDetail = await ROOM_PRICE.findOne({days: numberOfDays});
         } else if (numberOfDays > 7 && numberOfDays <= 30) {
             query = 30;
         } else if (numberOfDays > 30 && numberOfDays <= 90) {
@@ -622,6 +798,66 @@ function formatDates(startDate, endDate) {
 
     return {start_date, end_date};
 }
+
+// Save data
+router.post(END_POINT.ABOUT_US, async (req, res) => {
+    try {
+        const {description, alignment} = req.body;
+        const newAbout = new ABOUT({description, alignment});
+        const savedAbout = await newAbout.save();
+        sucessResponse(res, 'Record added successfully!');
+    } catch (error) {
+        console.error('Error saving data:', error);
+        res.status(500).json({error: 'Error saving data'});
+    }
+});
+
+// Get all data
+router.get(END_POINT.ABOUT_US, async (req, res) => {
+    try {
+        const allAboutData = await ABOUT.find();
+        const first = allAboutData[0];
+        sucessResponse(res, first);
+    } catch (error) {
+        console.error('Error getting data:', error);
+        res.status(500).json({error: 'Error getting data'});
+    }
+});
+
+// Update data by ID
+router.put(END_POINT.ABOUT, async (req, res) => {
+    try {
+        const {description, alignment} = req.body;
+        const updatedAbout = await ABOUT.findByIdAndUpdate(
+            req.params.id,
+            {description, alignment},
+            {new: true} // Return the updated document
+        );
+        sucessResponse(res, updatedAbout);
+    } catch (error) {
+        console.error('Error updating data:', error);
+        res.status(500).json({error: 'Error updating data'});
+    }
+});
+
+// GET ROOM POST DETAIL BY ID API
+router.get(END_POINT.ABOUT, async (req, res) => {
+
+    console.log(new Date(), ' ===== GET ABOUT REQUEST =====');
+    const id = req.params.id;
+
+    try {
+        const aboutDetail = await ABOUT.findById(id);
+
+        if (!aboutDetail) {
+            errorResponse(res, 404, 'Record not found');
+        }
+        sucessResponse(res, aboutDetail);
+    } catch (error) {
+        console.error('ERROR FETCHING ROOM DETAILS:', error);
+        errorResponse(res, 500, 'Internal server error');
+    }
+});
 
 function sucessResponse(res, message) {
     return res.status(200).json({status: true, data: message});

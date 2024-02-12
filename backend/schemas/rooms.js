@@ -1,8 +1,16 @@
 const mongoose = require('mongoose');
 
+// const imageSchema = new mongoose.Schema({
+//     room_img_url: String,
+//     room_img_public_id: String,
+// });
+
 const rooms = new mongoose.Schema({
-    room_img_url: String,
-    room_img_public_id: String,
+    // images: [{
+    //     room_img_url: String,
+    //     room_img_public_id: String,
+    // }], // Array of images
+    images: [{_id: false, room_img_url: String, room_img_public_id: String}],
     description: String,
     dimensions: String,
     location: String,
