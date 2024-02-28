@@ -23,8 +23,8 @@ const app = express();
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use(cors());
-app.use(CONSTANTS.BASE_URL, userRoutes);
-app.use(CONSTANTS.BASE_URL, postRoutes);
+app.use(CONSTANTS.BASE_URL + CONSTANTS.VERSION, userRoutes);
+app.use(CONSTANTS.BASE_URL + CONSTANTS.VERSION, postRoutes);
 
 // Serve React app
 if (process.env.NODE_ENV === 'PRODUCTION') {
