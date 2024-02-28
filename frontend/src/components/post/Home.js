@@ -128,6 +128,7 @@ const Home = () => {
 
     const navigate = useNavigate();
     const [open, setOpen] = useState(false);
+    const [emptyMessage, setEmptyMessage] = useState(true);
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
     const [error, setError] = useState({
@@ -244,21 +245,17 @@ const Home = () => {
                 dispatch({type: ACTION.LOADING, payload: {loading: false}});
                 dispatch({type: ACTION.ERROR_IMAGE, payload: {error_image: false}});
                 dispatch({type: ACTION.ROOMS, payload: {rooms: response}});
+                setEmptyMessage(false);
+                if (!response) {
+                    setTimeout(() => {
+                        fetchData();
+                    }, 4000);
+                }
             } catch (error) {
                 console.error('Error:', error);
-                if (retryCount < 3) {
-                    // Retry after 5 seconds
-                    setTimeout(() => {
-                        retryCount++;
-                        fetchData();
-                    }, 2000);
-                } else {
-                    dispatch({type: ACTION.LOADING, payload: {loading: false}});
-                    // Handle maximum retries exceeded
-                    // console.error('Max retries exceeded');
-                    dispatch({type: ACTION.ERROR_IMAGE, payload: {error_image: true}});
-                    toast.warn('Reload the page', ToastConfig);
-                }
+                setTimeout(() => {
+                    fetchData();
+                }, 4000);
             }
         };
 
@@ -280,7 +277,7 @@ const Home = () => {
                     {/* List of rooms */}
                     {state.rooms &&
                         state.rooms.map(room => (
-                            <Col xl={4} lg={4} md={4} sm={6} key={room?._id}>
+                            <Col xl={3} lg={3} md={4} sm={6} key={room?._id}>
                                 <Card
                                     className="d-flex justify-content-around align-content-center"
                                     color="light"
@@ -294,15 +291,6 @@ const Home = () => {
 
                                     {/*{JSON.stringify(room?.images)}*/}
                                     <ImageList images={room?.images}/>
-                                    {/*<CardImg*/}
-                                    {/*    alt="Card image cap"*/}
-                                    {/*    src={room.room_img_url}*/}
-                                    {/*    onClick={() => openModal(room?._id)}*/}
-                                    {/*    style={{*/}
-                                    {/*        borderTopRightRadius: '20px', borderTopLeftRadius: '20px'*/}
-                                    {/*    }}*/}
-                                    {/*    width="100%"*/}
-                                    {/*/>*/}
                                     <CardBody>
                                         {/* Action Button (Update/Delete) */}
                                         {state.is_admin &&
@@ -338,8 +326,9 @@ const Home = () => {
                                                 </Popover>
                                             </>
                                         }
-                                        <CardTitle tag="h5">{room.room_type}</CardTitle>
-                                        <CardText>{room?.description.substring(0, 100)}...
+                                        <CardTitle onClick={() => moreDetail(room?._id)}
+                                                   tag="h5">{room.room_type}</CardTitle>
+                                        <CardText>{room?.description.substring(0, 50)}...
                                             <span style={{color: "cadetblue", cursor: 'pointer'}}
                                                   onClick={() => moreDetail(room?._id)}> <u>Read more</u></span>
                                         </CardText>
@@ -417,8 +406,7 @@ const Home = () => {
                         </Fade>
                     </MUModal>
                 </Row>
-                {
-                    !state.rooms &&
+                {emptyMessage &&
                     <Container style={{marginTop: '100px'}}>
                         <h3>No Content here</h3>
                     </Container>

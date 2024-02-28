@@ -39,13 +39,13 @@ export function PriceBollets({heading, sub_heading, amount, discount}) {
             <p style={headingStyle} className='mb-0'>{heading}</p>
             <CardBody>
                 <CardText style={{padding: '3px 10px 3px 10px'}} className='mb-0'>{sub_heading}</CardText>
-                <CardText className='mb-0'><b>PKR: </b>{amount}
+                <CardText className='mb-0'><b>PKR: </b>{amount} Rupees
                     <span className="day"> <br/>(Per day)</span>
                 </CardText>
                 <CardText>
                     <Discount>
                         <DiscountIcon className="dicount" style={fontSize}/>
-                        <b> Discount: </b>{discount}
+                        <b> Discount: </b>{discount}%
                     </Discount>
                 </CardText>
             </CardBody>

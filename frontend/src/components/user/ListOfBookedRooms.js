@@ -76,7 +76,7 @@ const ListOfBookedRooms = () => {
                         // const newArray = [...users];
                         // newArray.push(response);
                         const result = response;
-                        // console.log(result);
+                        console.log(result.data);
                         setUsers(result.data);
                         if (result?.data.length > 0) {
                             setContent(false);

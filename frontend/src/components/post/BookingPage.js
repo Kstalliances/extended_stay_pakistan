@@ -2,9 +2,19 @@ import Base from "../Base";
 import {useParams} from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import {BookRoom, CalculateTotalAmount, getAccDetail} from "../../service/BookingService";
-import {Alert, Tooltip} from "@mui/material";
-import Container from "@mui/material/Container";
-import {Card, Col, Form, FormGroup, Input, Label, Modal, ModalBody, ModalFooter, ModalHeader, Row} from "reactstrap";
+import {
+    Card,
+    Col,
+    Container,
+    Form,
+    FormGroup,
+    Label,
+    Modal,
+    ModalBody,
+    ModalFooter,
+    ModalHeader,
+    Row
+} from "reactstrap";
 import Button from "@mui/material/Button";
 import jasscash from "../../img/Jazz-cash.jpg";
 import standard from '../../img/standard.png';
@@ -13,18 +23,43 @@ import {getUserDetail} from "../../service/userservice";
 import "../../style/DatePicker.css";
 import "../../style/general.css";
 import {getRoomDates, getRoomReservedDates} from "../../service/roomsservice";
+import Calendar from "react-calendar";
+import {Alert} from "@mui/material";
 
 const RoomCreds = styled.p`
-  padding: 12px;
-  color: #666;
-  border-radius: 1rem;
-  transition: 0.5s ease;
-
-  &:hover {
-    background: #f3f4f7;
-    cursor: pointer;
-  }
+    padding: 12px;
+    color: #666;
+    border-radius: 1rem;
+    transition: 0.5s ease;
 `;
+
+const CardStyle = {
+    backgroundColor: '#f3f4f7',
+    border: 'none',
+    marginTop: '20px',
+    borderRadius: '20px'
+}
+
+const AccCardStyle = {
+    boxShadow: 'rgba(0, 0, 0, 0.1) 0px 4px 12px',
+    border: 'none',
+    padding: '8px',
+    borderRadius: '10px',
+    display: 'flex',
+    justifyContent: 'center', /* Horizontally center align */
+    alignItems: 'center',
+    marginBottom: '15px'
+}
+
+const AccStyle = {
+    color: '#0C356A',
+    fontSize: '12px'
+}
+
+const HeadingStyle = {
+    color: '#0C356A',
+    marginBottom: '20px'
+}
 
 export const BookingPage = () => {
     // ----------------- Hooks -----------------
@@ -36,14 +71,12 @@ export const BookingPage = () => {
     const [dateRangeError, setDateRangeError] = useState(false);
     const [fromDate, setFromDate] = useState('');
     const [toDate, setToDate] = useState('');
-    const [listOfDates, setListOfDates] = useState([]);
     const [showModal, setShowModel] = useState(false);
     const [accOne, setAccOne] = useState();
     const [accTwo, setAccTwo] = useState();
     const [success, setSuccess] = useState(false);
     const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
-    const [checkInDate, setCheckInDate] = useState('');
-    const [checkOutDate, setCheckOutDate] = useState('');
+    const [selectedRanges, setSelectedRanges] = useState([]);
 
 
     // ----------------- For Showing Error -----------------
@@ -56,11 +89,7 @@ export const BookingPage = () => {
             setModal(!modal);
             setErrorMessage('Select the dates to calculate (Rent)')
         } else {
-            if (fromDate < today || toDate < today) {
-                // console.log('Condition true');
-                setModal(!modal);
-                setErrorMessage('Please select a future date for check-in');
-            } else if (fromDate > toDate) {
+            if (fromDate > toDate) {
                 setModal(!modal);
                 setErrorMessage('Oh no! Start Date cannot be greater than End Date. Please select valid dates.');
             } else {
@@ -120,31 +149,44 @@ export const BookingPage = () => {
 
     }
 
-    const handleFromDate = (e) => {
-        const selectedDate = e.target.value;
-        if (selectedDate < today) {
-            setError('Please select a future date for check-in');
-        } else {
-            setFromDate(selectedDate.toString());
-        }
+    const handleFromDate = (d) => {
+        const date = new Date(d);
+
+        // Get the parts of the date (year, month, day)
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Adding 1 to month because month is 0-indexed
+        const day = String(date.getDate()).padStart(2, '0');
+
+        // Format the date as 'YYYY-MM-DD'
+        const formattedDate = `${year}-${month}-${day}`;
+        console.log(formattedDate);
+        setFromDate(formattedDate);
     }
 
-    const handleToDate = (e) => {
+    const handleToDate = (d) => {
+        const date = new Date(d);
 
-        const selectedDate = e.target.value;
-        if (selectedDate < today) {
-            setError('Please select a future date for check-out');
-        } else {
-            setToDate(selectedDate.toString());
-        }
+        // Get the parts of the date (year, month, day)
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Adding 1 to month because month is 0-indexed
+        const day = String(date.getDate()).padStart(2, '0');
+
+        // Format the date as 'YYYY-MM-DD'
+        const formattedDate = `${year}-${month}-${day}`;
+        console.log(formattedDate);
+        setToDate(formattedDate);
     }
 
     useEffect(() => {
-
         // ------------- Get List of Room Dates -------------
         getRoomDates(roomId)
             .then((response) => {
-                setListOfDates(response);
+                const ranges = response.map(date => ({
+                    startDate: new Date(date.start_date),
+                    endDate: new Date(date.end_date), // Assuming each date is both start and end date
+                }));
+                setSelectedRanges(ranges);
+
             }).catch((error) => {
             // console.log(error);
         });
@@ -174,129 +216,141 @@ export const BookingPage = () => {
         setError(null);
     };
 
+    function getDatesInRange(start, end) {
+        const dates = [];
+        let currentDate = new Date(start);
+
+        while (currentDate <= end) {
+            dates.push(new Date(currentDate));
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        return dates;
+    }
+
+    const allHighlightedDates = selectedRanges.flatMap(range =>
+        getDatesInRange(range.startDate, range.endDate)
+    );
+
+    const tileContent = ({date, view}) => {
+        const isHighlighted = allHighlightedDates.some(d => d.toDateString() === date.toDateString());
+
+        const tileStyle = {
+            backgroundColor: isHighlighted ? '#ffcccb' : 'rgba(0, 0, 0, 0.1)', // Set dim color for non-highlighted dates
+            borderRadius: '8px',
+            width: '80%',
+            height: '80%',
+            margin: '10%',
+        };
+
+        return (
+            <div className="date-tile" style={tileStyle}>
+                {isHighlighted && <div className="highlighted-date"></div>}
+            </div>
+        );
+    };
+
     return (
         <Base>
-            <Container style={{marginBottom: '80px'}}>
-                <Row className="d-flex justify-content-center align-content-center">
-                    <Col xl={4} lg={8} xs={12}>
-                        <Card className="mt-5 p-2" style={{boxShadow: 'rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px'}}>
-                            <h6>This room is not available in these dates</h6>
-                            {/*{JSON.stringify(listOfDates)}*/}
-                            {listOfDates &&
-                                listOfDates?.map(date => (
-                                    <span key={date.start_date}>[ {date.start_date} - {date.end_date} ]</span>
-                                ))
-                            }
-                        </Card>
-                    </Col>
-                    <Col xl={8} lg={8}>
-                        <Card className="mt-5 p-3" style={{boxShadow: 'rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px'}}>
-                            {success &&
-                                <Alert style={{marginBottom: '20px'}}
-                                       severity="success"
-                                       sx={{transition: 'opacity 0.5s', opacity: 1}}
-                                >
-                                    Room booked successfully!
-                                </Alert>
-                            }
-                            <Form style={{textAlign: "left"}}>
-                                <Row className="d-flex justify-content-center"
-                                     xl={12} lg={12} md={12} sm={12} xs={12}>
-                                    <h3>Payment</h3>
-                                </Row>
-                                <Row className="mt-3">
-                                    <Col xl={3} lg={6} md={3} sm={4} xs={12}
-                                         className="mb-4">
-                                        <img src={standard} width={125} alt="image here"/>
-                                    </Col>
-                                    <Col xl={3} lg={6} md={3} sm={4} xs={12}>
-                                        <h6 style={{color: '#6a737b'}}>Acc Name: <span
-                                            className="mx-1">{accOne?.acc_name}</span>
-                                        </h6>
-                                        <h6 style={{color: '#6a737b'}}>Acc No:
-                                            <span className="mx-1">{accOne?.acc_number}</span>
-                                        </h6>
-                                    </Col>
-                                </Row>
-                                <Row>
-                                    <Col xl={3} lg={6} md={3} sm={4} xs={12}>
-                                        <img src={jasscash} width={100} height={60}
-                                             alt="image here"/>
-                                    </Col>
-                                    <Col xl={3} lg={6} md={3} sm={4} xs={12}>
-                                        <h6 style={{color: '#6a737b'}}>Acc Name: <span
-                                            className="mx-1">{accTwo?.acc_name}</span>
-                                        </h6>
-                                        <h6 style={{color: '#6a737b'}}>Acc No:
-                                            <span className="mx-1">{accTwo?.acc_number}</span>
-                                        </h6>
-                                    </Col>
-                                </Row>
-                                <hr/>
-                                <Row className="d-flex justify-content-center"
-                                     xl={12} lg={12} md={12} sm={12} xs={12}>
-                                    <h3>Check In/Check Out</h3>
-                                </Row>
-                                <Row>
-                                    <Col xl={6} lg={6} md={6} sm={12} xs={12}>
-                                        <FormGroup>
-                                            <Label>Check In</Label>
-                                            <Input type="date"
-                                                   className="custom-date-input"
-                                                   value={fromDate}
-                                                   min={today}
-                                                   onChange={handleFromDate}
-                                                   required
-                                            />
-                                        </FormGroup>
-                                    </Col>
-                                    <Col xl={6} lg={6} md={6} sm={12} xs={12}>
-                                        <FormGroup>
-                                            <Label>Check Out</Label>
-                                            <Input type="date"
-                                                   className="custom-date-input"
-                                                   value={toDate}
-                                                   min={checkInDate || today}
-                                                   onChange={handleToDate}
-                                                   required
-                                            />
-                                        </FormGroup>
-                                    </Col>
-                                    <Col className="mt-1">
-                                        <Button variant="outlined"
-                                                onClick={handleRate}>Calculate</Button>
-                                    </Col>
-                                </Row>
-                                <Row className="mt-3 mb-3">
-                                    <Col xl={5} lg={5} md={5} sm={12} xs={12}>
-                                        <RoomCreds>
-                                            <h6>Rent (Per Day): {paymentDetail?.rent_per_day}
-                                                {paymentDetail &&
-                                                    <s style={{color: 'lightgray'}}> 3000</s>}
-                                            </h6>
-                                            <h6>Days: {paymentDetail?.number_of_days}</h6>
-                                            <h6>Rent: {paymentDetail?.rent}</h6>
-                                            <h6>Discount: {paymentDetail?.discount}%</h6>
-                                            <hr/>
-                                            <h6>Total Amount: <b>{paymentDetail?.amount_after_discount}</b></h6>
-                                        </RoomCreds>
-                                    </Col>
-                                </Row>
+            <Row className="d-flex justify-content-around">
+                <Col lg={8}>
+                    <Container className="text-start p-4" style={CardStyle}>
+                        <h3 style={HeadingStyle}>Payment</h3>
+                        <Row>
+                            <Col lg={4} md={5} sm={5} xs={12}>
+                                <Card style={AccCardStyle}>
+                                    <img src={standard} width={100} alt="image here"/>
+                                    <h6 style={AccStyle}>Acc Name: <span className="mx-1">{accOne?.acc_name}</span></h6>
+                                    <h6 style={AccStyle}>Acc No: <span className="mx-1">{accOne?.acc_number}</span></h6>
+                                </Card>
+                            </Col>
+                            <Col lg={4} md={5} sm={5} xs={12}>
+                                <Card style={AccCardStyle}>
+                                    <img src={jasscash} width={100} alt="image here"/>
+                                    <h6 style={AccStyle}>Acc Name: <span className="mx-1">{accTwo?.acc_name}</span></h6>
+                                    <h6 style={AccStyle}>Acc No: <span className="mx-1">{accTwo?.acc_number}</span></h6>
+                                </Card>
+                            </Col>
+                        </Row>
+                    </Container>
+                </Col>
+                <Col lg={8}>
+                    <Container className="text-start p-4" style={CardStyle}>
+                        {success &&
+                            <Alert style={{
+                                marginBottom: '20px',
+                                boxShadow: 'rgba(0, 0, 0, 0.1) 0px 4px 12px',
+                                borderRadius: '10px'
+                            }}
+                                   severity="success"
+                                   sx={{transition: 'opacity 0.5s', opacity: 1}}
+                            >
+                                Room booked successfully!
+                            </Alert>
+                        }
+                        {/*  Card heading  */}
+                        <h3 style={HeadingStyle}>Check In/Check Out</h3>
 
-                                <Row>
-                                    <Col>
-                                        <Button variant={fromDate === '' || toDate === '' ? 'outlined' : 'contained'}
-                                            // disabled={fromDate === '' || toDate === ''}
-                                                onClick={handleBooking}>Book now</Button>
-                                    </Col>
-                                </Row>
-                                <Row>
-                                </Row>
-                            </Form>
+                        {/*  Room Availability  */}
+                        <Card style={{backgroundColor: 'transparent', border: 'none', marginBottom: '8px'}}>
+                            <h6 style={{fontSize: '12px'}}>Available Rooms</h6>
+                            <div style={{width: '40px', height: '20px', backgroundColor: 'rgba(0, 0, 0, 0.1'}}/>
                         </Card>
-                    </Col>
-                </Row>
-            </Container>
+                        <Card style={{backgroundColor: 'transparent', border: 'none'}}>
+                            <h6 style={{fontSize: '12px'}}>Booked Rooms</h6>
+                            <div style={{width: '40px', height: '20px', backgroundColor: '#ffcccb'}}/>
+                        </Card>
+
+                        {/*  Calculate rate  */}
+                        <Form style={{textAlign: "left"}}>
+                            <Row>
+                                <Col xl={6} lg={6} md={6} sm={6} xs={12}>
+                                    <FormGroup>
+                                        <Label>Check In</Label>
+                                        <Calendar
+                                            // value={fromDate}
+                                            onChange={handleFromDate}
+                                            tileContent={tileContent}
+                                            tileDisabled={({date}) => date < new Date().setHours(0, 0, 0, 0)}
+                                        />
+                                    </FormGroup>
+                                </Col>
+                                <Col xl={6} lg={6} md={6} sm={6} xs={12}>
+                                    <FormGroup>
+                                        <Label>Check Out</Label>
+                                        <Calendar
+                                            value={toDate}
+                                            onChange={handleToDate}
+                                            tileContent={tileContent}
+                                            tileDisabled={({date}) => date < new Date().setHours(0, 0, 0, 0)}
+                                        />
+                                    </FormGroup>
+                                </Col>
+                                <Col className="mt-1">
+                                    <Button variant="outlined"
+                                            onClick={handleRate}>Calculate</Button>
+                                    <RoomCreds>
+                                        <h6>Rent (Per Day): {paymentDetail?.rent_per_day}
+                                            {paymentDetail &&
+                                                <s style={{color: 'lightgray'}}> 3000</s>}
+                                        </h6>
+                                        <h6>Days: {paymentDetail?.number_of_days}</h6>
+                                        <h6>Rent: {paymentDetail?.rent}</h6>
+                                        <h6>Discount: {paymentDetail?.discount}%</h6>
+                                        <hr/>
+                                        <h6>Total Amount: <b>{paymentDetail?.amount_after_discount}</b></h6>
+                                    </RoomCreds>
+                                    <Button variant={fromDate === '' || toDate === '' ? 'outlined' : 'contained'}
+                                        // disabled={fromDate === '' || toDate === ''}
+                                            onClick={handleBooking}>Book now</Button>
+                                </Col>
+                            </Row>
+                        </Form>
+                    </Container>
+                </Col>
+            </Row>
+
+
             <div>
                 <Modal isOpen={modal} toggle={toggle}>
                     <ModalHeader toggle={toggle} style={{color: 'red'}}>Error</ModalHeader>

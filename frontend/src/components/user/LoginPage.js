@@ -45,6 +45,10 @@ export const LoginPage = () => {
     const [isLogin, setIsLogin] = useState(false);
     const [error, setError] = useState(false);
 
+    function gotoForgotPwPage() {
+        navigate('/user/forgot-password');
+    }
+
     const handleFormSubmit = (event) => {
         event.preventDefault();
 
@@ -153,6 +157,7 @@ export const LoginPage = () => {
                                                 ),
                                             }}
                                         />
+                                        <a className="forgot_icon" onClick={gotoForgotPwPage}>Forgot password!</a>
                                     </FormGroup>
 
                                     <LoadingButton

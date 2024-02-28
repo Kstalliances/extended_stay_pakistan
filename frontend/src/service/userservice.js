@@ -88,3 +88,13 @@ export const GetUsers = () => {
     return myAxios.get('/users')
         .then(response => response.data);
 }
+
+export const ChangePassword = (name, newPassword, confirmPassword) => {
+    return myAxios.put('/user/change-password', {name, newPassword, confirmPassword})
+        .then(response => response.data);
+}
+
+export const GetNormalUserBookedRooms = (userId, page) => {
+    return myAxios.get(`/user/${userId}/booked-rooms?page=${page}`)
+        .then(response => response.data);
+}

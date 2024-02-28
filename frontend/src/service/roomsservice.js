@@ -1,7 +1,8 @@
 import {myAxios, privateAxios} from "../config/cloud";
+import END_POINT from '../config/globalContants';
 
 export const getRooms = () => {
-    return myAxios.get("/rooms")
+    return myAxios.get(END_POINT.GET_ROOMS)
         .then((response) =>
             response.data.data
         );
@@ -50,3 +51,23 @@ export const deleteUserRoom = (roomId, publicId, userId) => {
     return privateAxios.delete(`/delete-room/${userId}/${roomId}/${publicId}`)
         .then(response => response.data);
 }
+
+export const GetRoomRates = () => {
+    return myAxios.get(END_POINT.GET_ROOM_RATE)
+        .then((response) => response.data);
+}
+
+export const GetOneRoomRates = (id) => {
+    return myAxios.get(`/room-rates/${id}`)
+        .then((response) => response.data);
+}
+export const UpdateRoomRate = (id, rate) => {
+    return myAxios.put(`/room-rates/${id}`, rate)
+        .then((response) => response.data);
+}
+
+export const DeleteRoomRates = (id) => {
+    return myAxios.delete(`/room-rates/${id}`)
+        .then((response) => response.data);
+}
+

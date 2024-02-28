@@ -3,11 +3,12 @@ import {CircularProgress} from "@mui/material";
 import {Card, Col, Form, FormGroup, Row} from "reactstrap";
 import TextField from "@mui/material/TextField";
 import Base from "./Base";
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {useParams} from "react-router-dom";
 import {GetAboutUsById, getUserDetail, UpdateAboutUs} from "../service/userservice";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
+import JoditEditor from "jodit-react";
 
 export function UpdateAbout() {
 
@@ -18,9 +19,12 @@ export function UpdateAbout() {
         alignment: ''
     });
 
-    const handleChange = (event, field) => {
-        let actualValue = event.target.value;
-        setABout({...about, [field]: actualValue});
+    // Jodit editor configuration
+    const editor = useRef(null);
+
+
+    const contentFieldChanged = (data) => {
+        setABout({...about, description: data})
     };
 
     function updateAboutUs() {
@@ -55,21 +59,10 @@ export function UpdateAbout() {
             </Backdrop>
             <Row className="d-flex justify-content-center align-content-center">
                 {/*{JSON.stringify(about)}*/}
-                <Col xxl={8} xl={8} lg={8} md={8} sm={10}>
+                <Col xxl={10} xl={10} lg={10} md={10} sm={10}>
                     <Card className="m-3 p-4" style={{textAlign: 'left'}}>
                         <h3>Update About us</h3>
                         <Form onSubmit={updateAboutUs}>
-                            {/*<FormGroup>*/}
-                            {/*    <TextField*/}
-                            {/*        fullWidth*/}
-                            {/*        name="room_type"*/}
-                            {/*        label="Room type"*/}
-                            {/*        variant="standard"*/}
-                            {/*        id="room_type"*/}
-                            {/*        value={room?.room_type}*/}
-                            {/*        onChange={(e) => handleChange(e, ACTION.ROOM_TYPE)}*/}
-                            {/*    />*/}
-                            {/*</FormGroup>*/}
                             <FormGroup>
                                 <Box
                                     component="form"
@@ -79,14 +72,12 @@ export function UpdateAbout() {
                                     noValidate
                                     autoComplete="off"
                                 >
-                                    <TextField
-                                        fullWidth='true'
-                                        id="outlined-textarea"
-                                        label="Description"
-                                        placeholder="Placeholder"
+                                    <JoditEditor
+                                        name="about"
+                                        ref={editor}
                                         value={about?.description}
-                                        onChange={(e) => handleChange(e, 'description')}
-                                        multiline
+                                        onChange={contentFieldChanged}
+                                        // config={config}
                                     />
                                 </Box>
                             </FormGroup>
