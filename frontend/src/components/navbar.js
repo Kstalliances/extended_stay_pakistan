@@ -13,6 +13,7 @@ import {deepPurple} from "@mui/material/colors";
 
 export const Navbar5 = () => {
     const navigate = useNavigate();
+    const [userId, setUserId] = useState(false);
     const [login, setLogin] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [isAdmin, setIsAdmin] = useState(false);
@@ -35,6 +36,10 @@ export const Navbar5 = () => {
         navigate("/user/add-room");
     }
 
+    const navigateToNormalUserBookedRoomPage = () => {
+        navigate('/booked-rooms/' + userId);
+    }
+
     function handleAdmin(user) {
         if (user?.data?.userRole == 'ADMIN') {
             setIsAdmin(true);
@@ -47,6 +52,7 @@ export const Navbar5 = () => {
         console.log();
         setUsername(getUserDetail()?.data?.username.substring(0, 1).toUpperCase());
         setUser(getUserDetail()?.data?.username);
+        setUserId(getUserDetail()?.data?.userId);
         handleAdmin(getUserDetail());
     })
     return (
@@ -113,6 +119,11 @@ export const Navbar5 = () => {
                                     </NavItem>
                                 </>
                             )}
+                            <NavItem className="my-room">
+                                <NavLink onClick={navigateToNormalUserBookedRoomPage}>
+                                    My Rooms
+                                </NavLink>
+                            </NavItem>
                             <NavItem className="signout">
                                 <NavLink onClick={logout}>
                                     Sign out

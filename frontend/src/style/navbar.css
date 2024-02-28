@@ -45,7 +45,8 @@
 }
 
 .username:hover,
-.signout:hover {
+.signout:hover,
+.my-room:hover {
     cursor: pointer;
 }
 

@@ -1,54 +1,57 @@
 import styled from "styled-components";
 import {Col, Modal, ModalBody, ModalFooter, ModalHeader, Row} from "reactstrap";
 import React, {useEffect, useState} from "react";
-import {getRoomBookingStatus, getRoomById} from "../../service/roomsservice";
+import {DeleteRoomRates, getRoomBookingStatus, getRoomById, GetRoomRates} from "../../service/roomsservice";
 import {useNavigate, useParams} from "react-router-dom";
 import Base from "../Base";
 import Button from "@mui/material/Button";
-import {isLoggedIn} from "../../service/userservice";
-import {Alert, Avatar, Chip} from "@mui/material";
+import {getUserDetail, isLoggedIn} from "../../service/userservice";
+import {Chip} from "@mui/material";
 import {PriceBollets} from "../priceBollets";
-import {StandardRoom} from "../PriceAndRuleData";
+import EditIcon from "@mui/icons-material/Edit";
+import DeleteIcon from '@mui/icons-material/Delete';
+import {toast} from "react-toastify";
+import {ToastConfig} from "../../config/toastConfig";
 
 const DetailComponent = styled.div`
-  //max-width: 400px;
-  margin-right: 20px;
-  margin-left: 20px;
-  margin-top: 20px;
-  //border: 1px solid #ddd;
-  border-radius: 8px;
-  overflow: hidden;
-  //box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    //max-width: 400px;
+    margin-right: 20px;
+    margin-left: 20px;
+    margin-top: 20px;
+    //border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    //box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 `;
 
 const RoomImage = styled.img`
-  //display: flex;
-  width: 100%;
-  margin: 6px;
-  height: 200px;
-  border-radius: 18px;
-  object-fit: cover;
+    //display: flex;
+    width: 100%;
+    margin: 6px;
+    height: 200px;
+    border-radius: 18px;
+    object-fit: cover;
 `;
 
 const RoomDetails = styled.div`
-  padding: 16px;
-  text-align: left;
+    padding: 16px;
+    text-align: left;
 `;
 
 const TYPE = styled.h2`
-  margin-bottom: 8px;
-  color: #262626;
-  font-size: 18px;
+    margin-bottom: 8px;
+    color: #262626;
+    font-size: 18px;
 `;
 
 const Description = styled.p`
-  color: #666;
+    color: #666;
 `;
 
 const Price = styled.div`
-  margin-top: 16px;
-  font-size: 1.2em;
-  color: #3498db;
+    margin-top: 16px;
+    font-size: 1.2em;
+    color: #3498db;
 `;
 
 const ChipStyle = {
@@ -58,27 +61,26 @@ const ChipStyle = {
 }
 
 const BookingStatus = styled.div`
-  color: wheat;
-  font-family: Calibri;
-  font-weight: bold;
-  background-color: #0077c8;
-  padding: 2px 8px;
-  border-radius: 8px;
-  width: 80px;
-  margin-bottom: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+    color: wheat;
+    font-family: Calibri;
+    font-weight: bold;
+    background-color: #0077c8;
+    padding: 2px 8px;
+    border-radius: 8px;
+    width: 80px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 `
 
 const MoreDetailComponent = () => {
 
     const {roomId} = useParams();
     const [roomDetail, setRoomDetail] = useState();
-    const [user, setUser] = useState();
-    const [roomStatus, setRoomStatus] = useState('');
-    const [isLogin, setIsLogin] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [roomPrice, setRoomPrice] = useState([]);
+    const [isAdmin, setIsAdmin] = useState(false);
 
     useEffect(() => {
         // get single room detail from backend
@@ -94,12 +96,22 @@ const MoreDetailComponent = () => {
         // is room already booked / available for booking
         getRoomBookingStatus(roomId)
             .then(response => {
-                setRoomStatus(response);
                 // console.log(response);
             }).catch(error => {
             console.log(error);
         });
 
+        GetRoomRates()
+            .then((response) => {
+                // console.log(response);
+                setRoomPrice(response?.data);
+            }).catch((error) => {
+            console.log(error);
+        })
+
+        if (getUserDetail()?.data?.userRole == 'ADMIN') {
+            setIsAdmin(true);
+        }
 
     }, [roomId]);
 
@@ -111,17 +123,30 @@ const MoreDetailComponent = () => {
         } else {
             setModal(!modal);
             setErrorMessage('First login and then book a room!');
-            setIsLogin(true);
             setTimeout(() => {
-                setIsLogin(false);
+                navigate('/room-detail/' + roomId);
             }, 4000);
-            navigate('/room-detail/' + roomId);
         }
     }
 
     // ----------------- For Showing Error -----------------
     const [modal, setModal] = useState(false);
     const toggle = () => setModal(!modal);
+
+    function gotoUpdateRatePage(id) {
+        navigate('/user/update-room-rate/' + id);
+    }
+
+    function deleteRoomRate(id) {
+        console.log(id);
+        DeleteRoomRates(id)
+            .then((response) => {
+                toast.success('Rate delete successfully', ToastConfig);
+            }).catch(error => {
+            console.log(error);
+        })
+    }
+
 
     return (
         <Base>
@@ -178,13 +203,26 @@ const MoreDetailComponent = () => {
                                     }
                                     {/* Price */}
                                     <Row className="d-flex justify-content-center align-content-center">
-                                        {StandardRoom.map(d => (
+                                        {roomPrice.map(d => (
                                             <Col className='mt-2'
                                                  xl={3} lg={3} md={3} sm={4} xs={6}>
-
-                                                <PriceBollets heading={d.cardHeading} sub_heading={d.cardDay}
-                                                              amount={d.cardAmount}
-                                                              discount={d.cardDiscount}/>
+                                                <PriceBollets heading={d.heading} sub_heading={d.sub_heading}
+                                                              amount={d.rent}
+                                                              discount={d.discount}/>
+                                                {isAdmin && (
+                                                    <div style={{
+                                                        border: '1px solid #008374',
+                                                        borderRadius: '8px',
+                                                        textAlign: 'center'
+                                                    }}>
+                                                        <Button color='error' size='small'
+                                                                onClick={() => deleteRoomRate(d._id)}><DeleteIcon/> Delete
+                                                        </Button>
+                                                        <Button color='success' size='small'
+                                                                className='mx-2'
+                                                                onClick={() => gotoUpdateRatePage(d._id)}><EditIcon/> Update</Button>
+                                                    </div>
+                                                )}
                                             </Col>
                                         ))
                                         }

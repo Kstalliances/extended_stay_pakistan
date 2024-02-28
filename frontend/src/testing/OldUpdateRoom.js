@@ -21,7 +21,7 @@ const DefaultImageStyle = {
     border: '2px solid #40A2E3',
     borderRadius: '15px'
 }
-export const UpdateRoom = () => {
+export const OldUpdateRoom = () => {
     const {roomId} = useParams();
     const [publicIds, setPublucIds] = useState('');
     const [image, setImage] = useState(undefined);
@@ -31,17 +31,14 @@ export const UpdateRoom = () => {
     const [isRoomAdded, setIsRoomAdded] = useState(false);
     const navigate = useNavigate();
     const [imageUrl, setImageUrl] = useState({
-        _id: '',
         room_img_url: '',
         room_img_public_id: ''
     });
     const [imageUrl2, setImageUrl2] = useState({
-        _id: '',
         room_img_url: '',
         room_img_public_id: ''
     });
     const [imageUrl3, setImageUrl3] = useState({
-        _id: '',
         room_img_url: '',
         room_img_public_id: ''
     });
@@ -323,11 +320,6 @@ export const UpdateRoom = () => {
         })
     };
 
-    const [selectedImages, setSelectedImages] = useState(null);
-    const handleImageChange = (event) => {
-        setSelectedImages(event.target.files);
-    };
-
     return (
         <Base>
             <Backdrop
@@ -347,7 +339,6 @@ export const UpdateRoom = () => {
                                 Room updated successfully!
                             </Alert>
                         }
-                        {/*{JSON.stringify(selectedImages)}*/}
                         <h3>Update Room</h3>
                         <Form>
                             {/* Image selection */}
@@ -363,11 +354,10 @@ export const UpdateRoom = () => {
                                 </FormLabel>
                                 <Input
                                     // bsSize=""
-                                    multiple
                                     type="file"
                                     name="file"
                                     id="file"
-                                    onChange={handleImageChange}
+                                    onChange={handleFileInput}
                                     accept="image/*"
                                 />
                             </FormGroup>

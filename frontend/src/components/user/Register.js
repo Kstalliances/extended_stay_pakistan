@@ -2,7 +2,7 @@ import Base from "../Base";
 import React, {useEffect, useState} from "react";
 import {Card, CardBody, Col, Container, Form, FormGroup, Row,} from "reactstrap";
 import TextField from "@mui/material/TextField";
-import {Alert, InputAdornment} from "@mui/material";
+import {Alert, FormHelperText, InputAdornment} from "@mui/material";
 import IconButton from "@mui/material/IconButton";
 import Iconify from "../Iconify";
 import {SignUp} from "../../service/userservice";
@@ -132,7 +132,7 @@ export const Registration = () => {
                             <CardBody>
                                 {/* creating form */}
                                 <Form onSubmit={handleFormSubmit} style={{textAlign: "left"}}>
-                                    {/* email field */}
+                                    {/* name field */}
                                     <FormGroup className="input-contain mb-4">
                                         <TextField fullWidth name="name" label="Name"
                                                    onChange={(e) => handleChange(e, "username")}
@@ -143,8 +143,9 @@ export const Registration = () => {
                                         <TextField fullWidth name="email" label="Email address" error={inputError}
                                                    onChange={(e) => handleChange(e, "email")}
                                                    value={loginDetail.email} helperText={helperText}/>
+                                        <FormHelperText id="my-helper-text">We'll never share your email.</FormHelperText>
                                     </FormGroup>
-                                    {/* email field */}
+                                    {/* phone no field */}
                                     <FormGroup className="input-contain mb-4">
                                         <TextField fullWidth name="phone" label="Phone #" error={inputError}
                                                    onChange={(e) => handleChange(e, "phone")}
