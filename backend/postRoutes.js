@@ -127,7 +127,7 @@ router.post(END_POINT.ADD_ROOM, verifyToken, upload.array('image', 3), async (re
             const savedRoom = await room.save();
 
             console.log("ROOM ADDED WITH ID: ", savedRoom._id);
-            sucessResponse(res, savedRoom);
+            successResponse(res, savedRoom);
 
         } catch (error) {
             console.log(`EXCEPTION: ${error}`);
@@ -135,101 +135,6 @@ router.post(END_POINT.ADD_ROOM, verifyToken, upload.array('image', 3), async (re
         }
     }
 );
-
-// GET ROOM POST DETAIL API
-router.get(END_POINT.GET_ROOMS, async (req, res) => {
-
-    console.log(new Date(), ' ===== GET ROOM DETAIL REQUEST =====');
-
-    try {
-        const rooms = await ROOM.find();
-        res.status(200).json({
-            status: true,
-            data: rooms,
-        });
-    } catch (error) {
-        console.error('ERROR FETCHING ROOMS:', error);
-        errorResponse(res, 500, 'Internal server error');
-    }
-});
-
-// GET ROOM POST DETAIL BY ID API
-router.get(END_POINT.GET_ROOM_BY_ID, async (req, res) => {
-
-    console.log(new Date(), ' ===== GET ROOM REQUEST =====');
-    const roomId = req.params.roomId;
-    console.log(`ROOM ID: ${roomId}`);
-
-    try {
-        const roomDetail = await ROOM.findById(roomId);
-
-        if (!roomDetail) {
-            errorResponse(res, 404, 'Room not found');
-        }
-        sucessResponse(res, roomDetail);
-    } catch (error) {
-        console.error('ERROR FETCHING ROOM DETAILS:', error);
-        errorResponse(res, 500, 'Internal server error');
-    }
-});
-
-
-// GET ROOM POST DETAIL BY USER API
-router.get(END_POINT.GET_USER_ROOMS, async (req, res) => {
-    // Fetch all rooms from the database
-    const userId = req.params.userId;
-
-    try {
-        const roomDetail = await ROOM.find({user_id: userId});
-
-        if (!roomDetail) {
-            return res.status(404).json({error: 'Room not found'});
-        }
-
-        res.status(200).json({status: true, data: roomDetail});
-    } catch (error) {
-        console.error('ERROR FETCHING ROOM DETAILS:', error);
-        res.status(500).json({error: 'Internal server error'});
-    }
-});
-
-// DELETE ROOM POST BY USER API
-router.delete(END_POINT.DELETE_USER_ROOM, verifyToken, (req, res) => {
-
-    console.log(new Date().toString(), ' ===== DELETE ROOM REQUEST =====');
-    const roomId = req.params.roomId;
-    const publicId = req.params.publicId;
-    const userId = req.params.userId;
-    console.log(`ROOM_ID: ${roomId}\nROOM_IMAGE_PUBLIC_ID: ${publicId}\nUSER_ID: ${userId}`);
-
-    // delete data from cloudinary
-    cloudinary.uploader.destroy(publicId, (error, result) => {
-        if (error) {
-            console.error('ERROR DELETING IMAGE: ', error);
-        } else {
-            console.log('IMAGE DELETED SUCCESSFULLY: ', result);
-        }
-    });
-
-    // Perform the delete operation in the database
-    try {
-        ROOM.deleteOne({_id: roomId})
-            .then((result) => {
-                if (result.deletedCount > 0) {
-                    console.log('Room deleted successfully');
-                } else {
-                    console.log('Room not found with the given ID');
-                }
-            })
-            .catch((err) => {
-                console.error('Error deleting room:', err);
-            });
-        res.json({success: true, message: 'Room deleted successfully'});
-    } catch (error) {
-        console.error('ERROR DELETING ROOM:', error);
-        res.status(500).json({error: 'Internal Server Error'});
-    }
-});
 
 // UPDATE ROOM POST BY USER API
 router.put(
@@ -391,134 +296,132 @@ router.put(
     }
 );
 
-// router.put(END_POINT.UPDATE_USER_ROOM, verifyToken, upload.array('image', 3), async (req, res) => {
-//         console.log(new Date(), ' ======= UPDATE ROOM REQUEST RECEIVED =======');
-//         // Parameters
-//         const file = req.file;
-//         const roomId = req.params.roomId;
-//         const userId = req.params.userId;
-//         let imageUrl;
-//
-//         console.log(`USER_ID: ${userId} ROOM_ID: ${roomId}`)
-//         let publicId = req.body.room_img_public_id;
-//
-//         // Request body
-//         const {
-//             description, dimensions, location, google_map, contact_name, contact_no, utility_charges,
-//             additional_person_charges, charge_per_unit, wifi, car_parking, meals, attached_bath,
-//             room_service, washing, total_rooms, room_type
-//         } = req.body;
-//
-//         try {
-//             // If a new file is provided, update image on Cloudinary
-//             if (file) {
-//
-//                 if (publicId) {
-//                     await DeleteImage(publicId);
-//                 }
-//
-//                 const fileBuffer = await UploadToCloudinary(file.buffer)
-//                     .then(async (result) => {
-//
-//                         console.log('FILE UPLOADED SUCCESSFULLY TO CLOUDINARY:', result);
-//
-//                         console.log(`IMAGE_URL: ${result.imageUrl} PUBLIC_ID: ${result.publicId}`);
-//
-//                         const body = {
-//                             description: description,
-//                             dimensions: dimensions,
-//                             location: location,
-//                             google_map: google_map,
-//                             contact_name: contact_name,
-//                             contact_no: contact_no,
-//                             user_id: userId,
-//                             utility_charges: utility_charges,
-//                             additional_person_charges: additional_person_charges,
-//                             charge_per_unit: charge_per_unit,
-//                             wifi: wifi,
-//                             car_parking: car_parking,
-//                             meals: meals,
-//                             attached_bath: attached_bath,
-//                             room_service: room_service,
-//                             washing: washing,
-//                             total_rooms: total_rooms,
-//                             room_type: room_type,
-//                             room_img_url: result.imageUrl,
-//                             room_img_public_id: result.publicId
-//                         }
-//
-//                         const savedRoom = await ROOM.updateOne({_id: roomId}, body);
-//                     })
-//                     .catch((error) => {
-//                         console.error('ERROR UPLOADING FILE TO CLOUDINARY:', error);
-//                     });
-//             } else {
-//                 const body = {
-//                     description: description,
-//                     dimensions: dimensions,
-//                     location: location,
-//                     google_map: google_map,
-//                     contact_name: contact_name,
-//                     contact_no: contact_no,
-//                     user_id: userId,
-//                     utility_charges: utility_charges,
-//                     additional_person_charges: additional_person_charges,
-//                     charge_per_unit: charge_per_unit,
-//                     wifi: wifi,
-//                     car_parking: car_parking,
-//                     meals: meals,
-//                     attached_bath: attached_bath,
-//                     room_service: room_service,
-//                     washing: washing,
-//                     total_rooms: total_rooms,
-//                     room_type: room_type
-//                 }
-//
-//                 const savedRoom = await ROOM.updateOne({_id: roomId}, body);
-//             }
-//
-//             console.log(`ROOM UPDATED FOR USER: ${userId}`);
-//             res.status(200).json({success: true, data: 'Record updated successfully!'});
-//         } catch
-//             (error) {
-//             console.error('ERROR UPDATING ROOM:', error);
-//             res.status(500).json({error: 'Error updating room'});
-//         }
-//     }
-// );
+// GET ROOM POST DETAIL API
+router.get(END_POINT.GET_ROOMS, async (req, res) => {
 
-
-router.post('/upload', upload.array('images', 5), async (req, res) => {
-
-    console.log(new Date(), " ===== POST REQUEST RECEIVED =====");
-    const images = req.files;
-
-    const imageUrls = [];
+    console.log(new Date(), ' ===== GET ROOM DETAIL REQUEST =====');
 
     try {
-        for (const image of images) {
-            // Upload to Cloudinary
-            const {imageUrl, publicId} = await new Promise((resolve, reject) => {
-                cloudinary.uploader.upload_stream({resource_type: 'auto'}, (error, result) => {
-                    if (error) {
-                        // console.error(new Date(), 'Error uploading file to Cloudinary:', error);
-                        reject(error);
-                    } else {
-                        // console.log('File uploaded successfully to Cloudinary:', result);
-                        const imageUrl = result.secure_url;
-                        const publicId = result.public_id;
-                        resolve({imageUrl, publicId});
-                    }
-                }).end(image.buffer);
-            });
+        const rooms = await ROOM.find();
+        res.status(200).json({
+            status: true,
+            data: rooms,
+        });
+    } catch (error) {
+        console.error('ERROR FETCHING ROOMS:', error);
+        errorResponse(res, 500, 'Internal server error');
+    }
+});
 
-            console.log("Image uploaded: ", imageUrl);
+// GET ROOM POST DETAIL BY ID API
+router.get(END_POINT.GET_ROOM_BY_ID, async (req, res) => {
+
+    console.log(new Date(), ' ===== GET ROOM REQUEST =====');
+    const roomId = req.params.roomId;
+    console.log(`ROOM ID: ${roomId}`);
+
+    try {
+        const roomDetail = await ROOM.findById(roomId);
+
+        if (!roomDetail) {
+            errorResponse(res, 404, 'Room not found');
+        }
+        successResponse(res, roomDetail);
+    } catch (error) {
+        console.error('ERROR FETCHING ROOM DETAILS:', error);
+        errorResponse(res, 500, 'Internal server error');
+    }
+});
+
+
+// GET ROOM POST DETAIL BY USER API
+router.get(END_POINT.GET_USER_ROOMS, async (req, res) => {
+    // Fetch all rooms from the database
+    const userId = req.params.userId;
+
+    try {
+        const roomDetail = await ROOM.find({user_id: userId});
+
+        if (!roomDetail) {
+            return res.status(404).json({error: 'Room not found'});
         }
 
-        res.json({success: true, imageUrls});
+        res.status(200).json({status: true, data: roomDetail});
     } catch (error) {
-        console.error('Error uploading and saving images:', error);
-        res.status(500).json({success: false, error: 'Internal Server Error'});
+        console.error('ERROR FETCHING ROOM DETAILS:', error);
+        res.status(500).json({error: 'Internal server error'});
+    }
+});
+
+// DELETE ROOM POST BY USER API
+router.delete(END_POINT.DELETE_USER_ROOM, verifyToken, (req, res) => {
+
+    console.log(new Date().toString(), ' ===== DELETE ROOM REQUEST =====');
+    const roomId = req.params.roomId;
+    const publicId = req.params.publicId;
+    const userId = req.params.userId;
+    console.log(`ROOM_ID: ${roomId}\nROOM_IMAGE_PUBLIC_ID: ${publicId}\nUSER_ID: ${userId}`);
+
+    // delete data from cloudinary
+    cloudinary.uploader.destroy(publicId, (error, result) => {
+        if (error) {
+            console.error('ERROR DELETING IMAGE: ', error);
+        } else {
+            console.log('IMAGE DELETED SUCCESSFULLY: ', result);
+        }
+    });
+
+    // Perform the delete operation in the database
+    try {
+        ROOM.deleteOne({_id: roomId})
+            .then((result) => {
+                if (result.deletedCount > 0) {
+                    console.log('Room deleted successfully');
+                } else {
+                    console.log('Room not found with the given ID');
+                }
+            })
+            .catch((err) => {
+                console.error('Error deleting room:', err);
+            });
+        res.json({success: true, message: 'Room deleted successfully'});
+    } catch (error) {
+        console.error('ERROR DELETING ROOM:', error);
+        res.status(500).json({error: 'Internal Server Error'});
+    }
+});
+
+//UPDATE THE IMAGES
+router.put(END_POINT.UPDATE_SINGLE_IMAGE, async (req, res) => {
+    console.log("UPDATE IMAGE");
+
+    const roomId = req.body.room_id;
+    const oldImageUrl = req.body.old_image_url;
+    const newRoomImgUrl = req.body.image_url;
+
+    try {
+        // Find the document by room ID and old image URL
+        const room = await ROOM.findOne({_id: roomId, 'images.room_img_url': oldImageUrl});
+
+        if (!room) {
+            console.log('Room not found or old image URL does not exist.');
+            return;
+        }
+
+        // Update the specific old image URL with the new URLs
+        room.images.forEach(image => {
+            if (image.room_img_url === oldImageUrl) {
+                // Update the image URL
+                image.room_img_url = newImageUrls;
+            }
+        });
+
+        // Save the updated document
+        const updatedRoom = await room.save();
+        console.log('Updated room:', updatedRoom);
+        res.status(200).json({status: true, message: "Image update successfully", data: updatedRoom});
+    } catch (error) {
+        console.error('Error updating image value:', error);
     }
 });
 
@@ -755,7 +658,7 @@ router.get(END_POINT.GET_ROOM_RESERVED_DATES, async (req, res) => {
 
 router.get(END_POINT.GET_LIST_OF_ROOM_DATE, async (req, res) => {
 
-    console.log(new Date(), 'Get list of reserved room dates');
+    console.log(new Date(), ' ===== Get list of reserved room dates =====');
 
     const roomId = req.params.roomId;
     console.log("roomId: " + roomId);
@@ -768,14 +671,20 @@ router.get(END_POINT.GET_LIST_OF_ROOM_DATE, async (req, res) => {
             return res.status(200).json({status: false, data: []});
         }
 
-        const formattedDatesArray = result.map(item => {
-            const {start_date, end_date} = formatDates(item.start_date, item.end_date);
-            return {start_date, end_date};
-        });
+        // const formattedDatesArray = result.map(item => {
+        //     const {start_date, end_date} = formatDates(item.start_date, item.end_date);
+        //     return {start_date, end_date};
+        // });
+        //
+        // console.log(formattedDatesArray)
+        // const formattedDatesArray = result.map(item => {
+        //     const {start_date, end_date} = (item.start_date, item.end_date);
+        //     return {start_date, end_date};
+        // });
 
-        console.log(formattedDatesArray)
+        console.log(result)
 
-        res.status(200).json({status: true, data: formattedDatesArray});
+        res.status(200).json({status: true, data: result});
     } catch (error) {
         console.error('Error getting reserved room dates:', error);
         res.status(500).json({status: false, data: 'Error getting reserved room dates'});
@@ -783,21 +692,37 @@ router.get(END_POINT.GET_LIST_OF_ROOM_DATE, async (req, res) => {
 
 });
 
-function formatDates(startDate, endDate) {
-    const start_date = new Date(startDate).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-    });
+// Assuming formatDates function is defined elsewhere
+function formatDates(start_date, end_date) {
+    // Assuming start_date and end_date are JavaScript Date objects
+    const formatDate = date => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
 
-    const end_date = new Date(endDate).toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-    });
-
-    return {start_date, end_date};
+    return {
+        start_date: formatDate(start_date),
+        end_date: formatDate(end_date)
+    };
 }
+
+// function formatDates(startDate, endDate) {
+//     const start_date = new Date(startDate).toLocaleDateString('en-GB', {
+//         day: '2-digit',
+//         month: 'short',
+//         year: 'numeric',
+//     });
+//
+//     const end_date = new Date(endDate).toLocaleDateString('en-GB', {
+//         day: '2-digit',
+//         month: 'short',
+//         year: 'numeric',
+//     });
+//
+//     return {start_date, end_date};
+// }
 
 // Save data
 router.post(END_POINT.ABOUT_US, async (req, res) => {
@@ -805,7 +730,7 @@ router.post(END_POINT.ABOUT_US, async (req, res) => {
         const {description, alignment} = req.body;
         const newAbout = new ABOUT({description, alignment});
         const savedAbout = await newAbout.save();
-        sucessResponse(res, 'Record added successfully!');
+        successResponse(res, 'Record added successfully!');
     } catch (error) {
         console.error('Error saving data:', error);
         res.status(500).json({error: 'Error saving data'});
@@ -817,7 +742,7 @@ router.get(END_POINT.ABOUT_US, async (req, res) => {
     try {
         const allAboutData = await ABOUT.find();
         const first = allAboutData[0];
-        sucessResponse(res, first);
+        successResponse(res, first);
     } catch (error) {
         console.error('Error getting data:', error);
         res.status(500).json({error: 'Error getting data'});
@@ -833,7 +758,7 @@ router.put(END_POINT.ABOUT, async (req, res) => {
             {description, alignment},
             {new: true} // Return the updated document
         );
-        sucessResponse(res, updatedAbout);
+        successResponse(res, updatedAbout);
     } catch (error) {
         console.error('Error updating data:', error);
         res.status(500).json({error: 'Error updating data'});
@@ -852,14 +777,134 @@ router.get(END_POINT.ABOUT, async (req, res) => {
         if (!aboutDetail) {
             errorResponse(res, 404, 'Record not found');
         }
-        sucessResponse(res, aboutDetail);
+        successResponse(res, aboutDetail);
     } catch (error) {
         console.error('ERROR FETCHING ROOM DETAILS:', error);
         errorResponse(res, 500, 'Internal server error');
     }
 });
 
-function sucessResponse(res, message) {
+// Get normal user booked rooms
+router.get(END_POINT.GET_NORMAL_USER_BOOKED_ROOMS, async (request, response) => {
+    console.log(new Date(), ' ===== GET NORMAL USER BOOKED ROOMS =====');
+
+    const page = parseInt(request.query.page) || 1;
+    const pageSize = parseInt(request.query.pageSize) || 5;
+    const userId = request.params.userId;
+    try {
+
+        const totalItems = await BOOKED_ROOMS.countDocuments();
+        const paginatedData = await BOOKED_ROOMS.find({user_id: userId})
+            .skip((page - 1) * pageSize)
+            .limit(pageSize)
+            .exec();
+
+        const dataWithFormattedDates = paginatedData.map((room, index) => {
+            const options = {day: '2-digit', month: 'short', year: 'numeric'};
+            const formattedStartDate = new Date(room.start_date).toLocaleDateString('en-GB', options);
+            const formattedEndDate = new Date(room.end_date).toLocaleDateString('en-GB', options);
+            return {
+                count: (page - 1) * pageSize + index + 1,
+                ...room.toObject(),  // Convert Mongoose document to plain JavaScript object
+                start_date: formattedStartDate,
+                end_date: formattedEndDate
+            };
+        });
+
+        response.json({
+            page,
+            pageSize,
+            totalItems,
+            totalPages: Math.ceil(totalItems / pageSize),
+            data: dataWithFormattedDates,
+        });
+
+    } catch (error) {
+        console.error('Error fetching booked rooms:', error);
+        return errorResponse(response, 400, error);
+    }
+});
+
+// GET ROOM RATES
+router.get(END_POINT.GET_ROOM_RATE, async (req, res) => {
+    console.log(new Date(), '===== GET ROOM RATES =====');
+    try {
+        const roomPrices = await ROOM_PRICE.find();
+        successResponse(res, roomPrices);
+    } catch (err) {
+        res.status(500).json({message: err.message});
+    }
+});
+
+// GET one room price
+router.get(END_POINT.ROOM_RATE, getRoomPrice, (req, res) => {
+    console.log(new Date(), '===== GET ROOM RATE =====');
+    successResponse(res, res.roomPrice);
+});
+
+// PUT update one room price
+router.put(END_POINT.ROOM_RATE, getRoomPrice, async (req, res) => {
+    console.log(new Date(), '===== UPDATE ROOM RATE =====');
+
+    if (req.body.heading != null) {
+        res.roomPrice.heading = req.body.heading;
+    }
+    if (req.body.sub_heading != null) {
+        res.roomPrice.sub_heading = req.body.sub_heading;
+    }
+    if (req.body.rent != null) {
+        res.roomPrice.rent = req.body.rent;
+    }
+    if (req.body.discount != null) {
+        res.roomPrice.discount = req.body.discount;
+    }
+    try {
+        const updatedRoomPrice = await res.roomPrice.save();
+        successResponse(res, updatedRoomPrice);
+    } catch (err) {
+        res.status(400).json({message: err.message});
+    }
+});
+
+// DELETE one room price
+router.delete(END_POINT.ROOM_RATE, getRoomPrice, async (req, res) => {
+    console.log(new Date(), ' ===== DELETE ROOM RATE =====');
+    try {
+        console.log('Id: ' + req.body.id)
+        await res.roomPrice.deleteOne({_id: req.body.id})
+            .then((result) => {
+                if (result.deletedCount > 0) {
+                    console.log('Rate deleted successfully');
+                } else {
+                    console.log('Rate not found with the given ID');
+                }
+            })
+            .catch((err) => {
+                console.error('Error deleting room:', err);
+            });
+        successResponse(res, 'Deleted room price')
+    } catch (err) {
+        res.status(500).json({message: err.message});
+    }
+});
+
+async function getRoomPrice(req, res, next) {
+    let roomPrice;
+    try {
+        roomPrice = await ROOM_PRICE.findById(req.params.id);
+        if (roomPrice == null) {
+            return res.status(404).json({message: 'Cannot find room price'});
+        }
+    } catch (err) {
+        return res.status(500).json({message: err.message});
+    }
+
+    res.roomPrice = roomPrice;
+    next();
+}
+
+
+function successResponse(res, message) {
     return res.status(200).json({status: true, data: message});
 }
 

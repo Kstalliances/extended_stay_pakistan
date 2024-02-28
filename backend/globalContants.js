@@ -1,9 +1,10 @@
 const URL_ENDPOINT = {
     PORT: "4000",
+    VERSION: '/v1',
     BASE_URL: "/api/room-book",
     LOGIN: "/login",
     SIGN_UP: "/create-user",
-    FORGOT_PASSWORD: "/user/:userId/change-password",
+    FORGOT_PASSWORD: "/user/change-password",
     USERS: "/users",
     GET_BOOKED_ROOMS: "/booked-rooms",
     APPROVE_PAYMENT: "/payment-approve",
@@ -14,6 +15,7 @@ const URL_ENDPOINT = {
     DELETE_USER_ROOM: "/delete-room/:userId/:roomId/:publicId",
     DELETE_ROOM_FROM_BOOKED_ROOM: '/delete/booked-room/:roomId/:startDate/:endDate',
     UPDATE_USER_ROOM: "/room/:roomId/user/:userId",
+    UPDATE_SINGLE_IMAGE: '/update/image',
     CALCULATE_ROOM_RATE: "/:roomId/booking/:userId",
     BOOK_ROOM: "/room-payment",
     CHECK_IS_ROOM_BOOKED: "/booking-status/:roomId",
@@ -21,7 +23,10 @@ const URL_ENDPOINT = {
     GET_LIST_OF_ROOM_DATE: '/list/room/date/:roomId',
     ACC_DETAIL: '/account-details',
     ABOUT_US: '/about',
-    ABOUT: '/about/:id'
+    ABOUT: '/about/:id',
+    GET_NORMAL_USER_BOOKED_ROOMS: '/user/:userId/booked-rooms',
+    GET_ROOM_RATE: '/room-rates',
+    ROOM_RATE: '/room-rates/:id'
 };
 
 module.exports = URL_ENDPOINT;

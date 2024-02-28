@@ -84,12 +84,18 @@ router.post(END_POINT.SIGN_UP, async (req, res) => {
     }
 
     // Check if the user already exists
-    const foundUser = await USER.find({name: username.toLowerCase()});
-    const foundUserByEmail = await USER.find({email: email});
-    // console.log('Found people:', foundUser);
-
-    if (foundUser.length > 0 || foundUserByEmail.length > 0) {
-        return res.status(409).json({status: false, error: 'User already exists'});
+    if (username) {
+        const foundUser = await USER.findOne({name: username.toLowerCase()});
+        console.log('Found user:', foundUser);
+        if (foundUser !== null) {
+            return res.status(409).json({status: false, error: 'User already exists'});
+        }
+    } else if (email) {
+        const foundUserByEmail = await USER.findOne({email});
+        console.log('Found user:', foundUserByEmail);
+        if (foundUserByEmail !== null) {
+            return res.status(409).json({status: false, error: 'User already exists'});
+        }
     }
 
     // Hash the password using bcrypt
@@ -118,43 +124,55 @@ router.post(END_POINT.SIGN_UP, async (req, res) => {
 });
 
 // FORGOT PASSWORD API
-router.put(END_POINT.FORGOT_PASSWORD, verifyToken, async (req, res) => {
-    const userId = req.params.userId;
-    const {newPassword} = req.body;
+router.put(END_POINT.FORGOT_PASSWORD, async (req, res) => {
+    console.log('===== FORGOT PASSWORD REQUEST =====');
+    const {name, newPassword, confirmPassword} = req.body;
 
+    console.log(`name: ${name} newPassword: ${newPassword} confirmPassword: ${confirmPassword}`)
     try {
 
-        // Hash the password using bcrypt
-        bcrypt.hash(newPassword, 10, (err, hashedPassword) => {
-            if (err) {
-                console.error('Error hashing password:', err);
-                return res.status(500).json({status: false, error: 'Error updating user password'});
-            }
-
-            // Assuming you have a 'users' table with columns 'id' and 'password'
-            const updateUserPasswordQuery = `UPDATE user SET password=? WHERE id=?`;
-            const values = [hashedPassword, userId];
-
-            db.query(updateUserPasswordQuery, values, (err, result) => {
-                if (err) {
-                    console.error('Error updating password:', err);
-                    res.status(500).send('Error updating password');
-                } else {
-                    if (result.affectedRows > 0) {
-                        console.log('Password updated successfully');
-                        res.status(200).send({status: true, data: 'Password updated successfully'});
-                    } else {
-                        console.log('User not found');
-                        res.status(404).send({status: true, data: 'User not found'});
-                    }
-                }
+        if (!newPassword || !confirmPassword) {
+            return res.status(400).send({status: false, code: 1, error: 'Password is required'});
+        } else if (!name) {
+            return res.status(400).send({status: false, code: 2, error: 'This is field is required'});
+        } else if (newPassword !== confirmPassword) {
+            console.log(new Date(), ' Your password does not match');
+            return res.status(400).send({
+                status: false,
+                code: 3,
+                error: 'Your newPassword and confirmYourPassword value does not match'
             });
-        });
-        // const hashedPassword = await bcrypt.hash(newPassword, 10);
+        }
 
+        // Find the user by email or name
+        const user = await USER.findOne({
+            $or: [
+                {email: name.toLowerCase()}, // Check if the email matches
+                {name: name.toLowerCase()}   // Check if the name matches (case-insensitive)
+            ]
+        });
+
+        console.log(new Date(), ' Found user: ', user);
+        if (!user) {
+            console.log(new Date(), 'User not found');
+            return res.status(400).json({status: false, code: 4, error: 'User not found!'})
+        }
+
+        const passwordMatch = await bcrypt.compare(newPassword, user.password);
+        if (passwordMatch) {
+            console.log(new Date(), ' New password matches old password');
+            return res.status(400).json({status: false, code: 5, error: 'Change your new password value'})
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save(); // Save the changes
+
+        console.log(new Date(), ' Password updated successfully');
+        res.status(200).send({status: true, data: 'Password updated successfully'});
     } catch (error) {
-        console.error('Error hashing password:', error);
-        res.status(500).send('Error hashing password');
+        console.error(new Date(), ' Error updating password:', error);
+        res.status(500).send({status: false, code: 6, error: 'Error updating password'});
     }
 });
 
