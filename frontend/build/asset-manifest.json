@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/static/css/main.0a145b9f.css",
-    "main.js": "/static/js/main.c3fad422.js",
+    "main.js": "/static/js/main.9bf81bbc.js",
     "static/js/787.24d0b948.chunk.js": "/static/js/787.24d0b948.chunk.js",
     "static/media/Jazz-cash.jpg": "/static/media/Jazz-cash.751ae723b87298fd6858.jpg",
     "static/media/error404.jpg": "/static/media/error404.87049462a1ae4986277e.jpg",
@@ -10,11 +10,11 @@
     "static/media/logo.png": "/static/media/logo.d69034529ed9ce9f8bca.png",
     "index.html": "/index.html",
     "main.0a145b9f.css.map": "/static/css/main.0a145b9f.css.map",
-    "main.c3fad422.js.map": "/static/js/main.c3fad422.js.map",
+    "main.9bf81bbc.js.map": "/static/js/main.9bf81bbc.js.map",
     "787.24d0b948.chunk.js.map": "/static/js/787.24d0b948.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.0a145b9f.css",
-    "static/js/main.c3fad422.js"
+    "static/js/main.9bf81bbc.js"
   ]
 }
