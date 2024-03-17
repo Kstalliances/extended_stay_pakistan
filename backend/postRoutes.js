@@ -136,12 +136,118 @@ router.post(END_POINT.ADD_ROOM, verifyToken, upload.array('image', 3), async (re
     }
 );
 
+router.put("/update-room/:roomId", async (req, res) => {
+    console.log(new Date(), ' ===== Update images request =====')
+    const roomId = req.params.roomId;
+    const {imageId, newImageUrl, publicId} = req.body;
+
+    console.log(roomId, imageId, newImageUrl, publicId);
+    try {
+        const updatedRoom = await ROOM.findOneAndUpdate(
+            {_id: roomId, "images._id": imageId}, // Find the document by room ID and image ID
+            {
+                $set: {
+                    "images.$.room_img_url": newImageUrl, // Update image URL
+                    "images.$.room_img_public_id": publicId // Update image public ID
+                }
+            },
+            {new: true} // To return the updated document
+        );
+
+        // const result = await ROOM.bulkWrite(updateOperations);
+
+        console.log(updatedRoom);
+        if (updatedRoom) {
+            res.json({message: "Images updated successfully:", data: updatedRoom});
+        } else {
+            res.json("Room or image not found.");
+        }
+    } catch (error) {
+        console.error("Error updating images:", error);
+    }
+})
+
+router.put("/update-rooms/:roomId", async (req, res) => {
+    console.log(new Date(), ' ===== Update images request =====')
+    const roomId = req.params.roomId;
+
+    const {
+        roomImages, description, dimensions, location, google_map, contact_name, contact_no, utility_charges,
+        additional_person_charges, charge_per_unit, wifi, car_parking, meals, attached_bath, room_service, washing,
+        total_rooms, room_type,
+    } = req.body;
+    // console.log(roomId, imageId, newImageUrl, publicId);
+    try {
+        // Create an array to store updated rooms
+        const updatedRooms = [];
+        let i = 1;
+        for (const item of roomImages) {
+            try {
+                console.log("Update image " + i + ": " + item.imageId);
+                console.log("Image url: " + item.newImageUrl);
+                await ROOM.findOneAndUpdate(
+                    {_id: roomId, "images._id": item.imageId}, // Find the document by room ID and image ID
+                    {
+                        $set: {
+                            "images.$.room_img_url": item.newImageUrl, // Update image URL
+                            "images.$.room_img_public_id": item.publicId // Update image public ID
+                        }
+                    },
+                    {new: true} // To return the updated document
+                );
+                i++;
+            } catch (error) {
+                console.error("Error updating image:", error);
+            }
+        }
+        const body = {
+            description: description,
+            dimensions: dimensions,
+            location: location,
+            google_map: google_map,
+            contact_name: contact_name,
+            contact_no: contact_no,
+            utility_charges: utility_charges,
+            additional_person_charges: additional_person_charges,
+            charge_per_unit: charge_per_unit,
+            wifi: wifi,
+            car_parking: car_parking,
+            meals: meals,
+            attached_bath: attached_bath,
+            room_service: room_service,
+            washing: washing,
+            total_rooms: total_rooms,
+            room_type: room_type,
+        }
+        const updateQuery = {};
+        if (body) {
+            updateQuery.$set = body;
+        }
+
+        console.log('Update query: ', updateQuery);
+
+        const updateRoom = await ROOM.findOneAndUpdate(
+            {_id: roomId},
+            updateQuery,
+            {new: true}
+        );
+        if (updateRoom) {
+            console.log('Successfully updated the room document.');
+        } else {
+            console.log('Room document not found.');
+        }
+
+        res.json({status: true, message: "Images updated successfully:"});
+    } catch (error) {
+        console.error("Error updating images:", error);
+    }
+})
+
 // UPDATE ROOM POST BY USER API
 router.put(
     END_POINT.UPDATE_USER_ROOM,
     verifyToken,
-    upload.array('image', 3),
-    async (req, res) => {
+    upload.array('image', 3), async (req, res) => {
         console.log(new Date(), ' ======= UPDATE ROOM REQUEST RECEIVED =======');
         // Parameters
         const files = req.files;
@@ -151,6 +257,7 @@ router.put(
 
         console.log(`USER_ID: ${userId} ROOM_ID: ${roomId}`);
         let publicIds = req.body.room_img_public_ids;
+        let imageIds = req.body.image_ids;
 
         // Request body
         const {
@@ -176,50 +283,12 @@ router.put(
         try {
             // If new files are provided, update images on Cloudinary
             if (files && files.length > 0) {
-                if (publicIds && publicIds.length > 0) {
-                    // Delete old images from Cloudinary
-                    const arrayOfValues = publicIds.split(',');
-                    for (const publicId of arrayOfValues) {
-                        await DeleteImage(publicId);
-                    }
+
+                const room = await ROOM.findById(roomId);
+
+                if (!room) {
+                    return res.status(404).json({error: 'Room not found'});
                 }
-
-                // Delete images field from DB
-                const updatedRoom = await ROOM.findOneAndUpdate(
-                    {_id: roomId},
-                    {$unset: {images: ""}},
-                    {new: true}
-                );
-                if (updatedRoom) {
-                    console.log('Successfully removed the images field from the room document.');
-                } else {
-                    console.log('Room document not found.');
-                }
-
-
-                // Upload new images to Cloudinary
-                const uploadPromises = files.map((file) => {
-                    return UploadToCloudinary(file.buffer)
-                        .then((result) => {
-                            // console.log('FILE UPLOADED SUCCESSFULLY TO CLOUDINARY:', result);
-                            // console.log(`IMAGE_URL: ${result.imageUrl} PUBLIC_ID: ${result.publicId}`);
-                            return {
-                                room_img_url: result.imageUrl,
-                                room_img_public_id: result.publicId,
-                            };
-                        })
-                        .catch((error) => {
-                            console.error('ERROR UPLOADING FILE TO CLOUDINARY:', error);
-                            throw error;
-                        });
-                });
-
-                // Wait for all images to be uploaded
-                const images = await Promise.all(uploadPromises);
-
-                // Now you can use the array of uploaded images in your logic
-                console.log('UPLOADED IMAGES:', images);
-
                 const body = {
                     description: description,
                     dimensions: dimensions,
@@ -238,30 +307,95 @@ router.put(
                     room_service: room_service,
                     washing: washing,
                     total_rooms: total_rooms,
-                    room_type: room_type,
+                    room_type: room_type
+                }
+                await ROOM.updateOne({_id: roomId}, body);
+
+                try {
+                    console.log("DELETING IMAGES FROM CLOUD");
+                    if (publicIds && publicIds.length > 0) {
+                        // Delete old images from Cloudinary
+                        const arrayOfValues = publicIds.split(',');
+                        for (const publicId of arrayOfValues) {
+                            await DeleteImage(publicId);
+                        }
+                    }
+                } catch (error) {
+                    console.log("ERROR IN DELETING IMAGES:" + error);
                 }
 
-                const updateQuery = {};
-                if (body) {
-                    updateQuery.$set = body;
-                }
-                if (images && images.length > 0) {
-                    updateQuery.$push = {images: {$each: images}};
+                // Upload new images to Cloudinary
+                console.log("UPLOAD NEW IMAGES TO CLOUD");
+                const uploadPromises = files.map((file) => {
+                    return UploadToCloudinary(file.buffer)
+                        .then((result) => {
+                            // console.log('FILE UPLOADED SUCCESSFULLY TO CLOUDINARY:', result);
+                            // console.log(`IMAGE_URL: ${result.imageUrl} PUBLIC_ID: ${result.publicId}`);
+                            return {
+                                room_img_url: result.imageUrl,
+                                room_img_public_id: result.publicId,
+                            };
+                        })
+                        .catch((error) => {
+                            console.error('ERROR UPLOADING FILE TO CLOUDINARY:', error);
+                            throw error;
+                        });
+                });
+                console.log("IMAGES UPLOADED SUCCESSFULLY");
+
+                // Wait for all images to be uploaded
+                const images = await Promise.all(uploadPromises);
+
+                if (imageIds && imageIds.length > 0) {
+                    imageIds = imageIds.split(',');
+                    console.log("IMAGE ID's: " + imageIds);
                 }
 
-                console.log('Update query: ', updateQuery);
+                const roomImages = [];
+                // Loop through both arrays simultaneously
+                for (let i = 0; i < imageIds.length; i++) {
+                    const id = imageIds[i];
+                    const image = images[i];
 
-                const updateRoom = await ROOM.findOneAndUpdate(
-                    {_id: roomId},
-                    updateQuery,
-                    {new: true}
-                );
-                if (updateRoom) {
-                    console.log('Successfully updated the room document.');
-                } else {
-                    console.log('Room document not found.');
+                    // Push values to roomImages array
+                    if (id !== undefined && image !== undefined) {
+                        roomImages.push({
+                            imageId: id,
+                            newImageUrl: image.room_img_url,
+                            publicId: image.room_img_public_id
+                        });
+                    }
+                }
+                console.log("IMAGES OBJECT FOR UPDATE: " + JSON.stringify(roomImages));
+
+                for (const image of roomImages) {
+                    try {
+                        if (image.imageId !== undefined && image.imageId !== ""
+                            && image.publicId !== undefined && image.publicId !== "") {
+                            let regex = /[\[\]']/g;
+                            // const truncatedImageId = image.imageId.replace(regex, '');
+                            const truncatedImageId = image.imageId.replace(regex, '');
+                            console.log("UPDATE IMAGE IN DB FOR IMAGE ID: " + truncatedImageId);
+
+                            await ROOM.findOneAndUpdate(
+                                {_id: roomId, "images._id": truncatedImageId}, // Find the document by room ID and image ID
+                                {
+                                    $set: {
+                                        "images.$.room_img_url": image.newImageUrl, // Update image URL
+                                        "images.$.room_img_public_id": image.publicId // Update image public ID
+                                    }
+                                },
+                                {new: true} // To return the updated document
+                            );
+
+                            console.log("IMAGES UPDATED IN DB");
+                        }
+                    } catch (error) {
+                        console.error("Error updating image:", error);
+                    }
                 }
 
+                return successResponse(res, 'Room updated successfully');
             } else {
                 const body = {
                     description: description,
@@ -397,7 +531,6 @@ router.put(END_POINT.UPDATE_SINGLE_IMAGE, async (req, res) => {
 
     const roomId = req.body.room_id;
     const oldImageUrl = req.body.old_image_url;
-    const newRoomImgUrl = req.body.image_url;
 
     try {
         // Find the document by room ID and old image URL
@@ -476,7 +609,7 @@ router.post(END_POINT.CALCULATE_ROOM_RATE, verifyToken, async (req, res) => {
         }
 
         const response = {
-            roomId: "",
+            // roomId: "",
             rent_per_day: "",
             days: "",
             number_of_days: "",
@@ -488,9 +621,8 @@ router.post(END_POINT.CALCULATE_ROOM_RATE, verifyToken, async (req, res) => {
         const originalAmount = roomPriceDetail.rent * numberOfDays;
         const discountPercentage = roomPriceDetail.discount;
         const discountAmount = (originalAmount * discountPercentage) / 100;
-        const amountAfterDiscount = originalAmount - discountAmount;
 
-        response.roomId = roomPriceDetail._id;
+        // response.roomId = roomPriceDetail._id;
         response.rent_per_day = roomPriceDetail.rent;
         response.days = roomPriceDetail.days;
         response.number_of_days = numberOfDays;
@@ -498,8 +630,8 @@ router.post(END_POINT.CALCULATE_ROOM_RATE, verifyToken, async (req, res) => {
         response.discount = discountPercentage;
         response.amount_after_discount = originalAmount;
 
-
-        res.status(200).json({status: true, data: response});
+        successResponse(res, response);
+        // res.status(200).json({status: true, data: response});
     }
 });
 
@@ -729,7 +861,7 @@ router.post(END_POINT.ABOUT_US, async (req, res) => {
     try {
         const {description, alignment} = req.body;
         const newAbout = new ABOUT({description, alignment});
-        const savedAbout = await newAbout.save();
+        await newAbout.save();
         successResponse(res, 'Record added successfully!');
     } catch (error) {
         console.error('Error saving data:', error);

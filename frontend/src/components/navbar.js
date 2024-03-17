@@ -60,7 +60,7 @@ export const Navbar5 = () => {
         // navbar fixed navbar-expand-md navbar-light bg-body-secondary
         <Navbar
             fixed=""
-            className="navbar navbar-expand-md navbar-dark p-3 p-lg-0"
+            className="navbar navbar-expand-lg navbar-dark p-3 p-lg-0"
         >
             <NavbarBrand tag={ReactLink} to="/">
                 <img src={logo} alt="image_here" width={40}/>

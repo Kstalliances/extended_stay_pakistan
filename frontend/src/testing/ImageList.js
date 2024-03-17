@@ -1,11 +1,7 @@
 import React, {useState} from 'react';
-import {
-    Carousel,
-    CarouselItem,
-    CarouselControl,
-    CarouselIndicators,
-    CarouselCaption,
-} from 'reactstrap';
+import {Carousel, CarouselControl, CarouselIndicators, CarouselItem,} from 'reactstrap';
+import '../style/general.css';
+
 
 const items = [
     {
@@ -51,7 +47,12 @@ function ImageList({args, images}) {
 
     const slides = images.map((item) => {
         const imageStyle = {
-            borderTopRightRadius: '20px', borderTopLeftRadius: '20px'
+            borderTopRightRadius: '20px',
+            borderTopLeftRadius: '20px',
+            width: '100%',
+            height: '200px',
+            borderRadius: '18px',
+            objectFit: 'cover'
             // Add any other styles you may want for the images
         };
         return (
@@ -60,7 +61,10 @@ function ImageList({args, images}) {
                 onExited={() => setAnimating(false)}
                 key={item.room_img_url}
             >
-                <img src={item.room_img_url} alt={item.room_img_public_id} style={imageStyle} width="100%"/>
+                <div className="card-img">
+                    <img src={item.room_img_url} alt={item.room_img_public_id} style={imageStyle}
+                         className="img-fluid"/>
+                </div>
             </CarouselItem>
         );
     });

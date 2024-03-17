@@ -12,6 +12,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from '@mui/icons-material/Delete';
 import {toast} from "react-toastify";
 import {ToastConfig} from "../../config/toastConfig";
+import QuiltedImageList from "./MoreDetailImages";
 
 const DetailComponent = styled.div`
     //max-width: 400px;
@@ -21,6 +22,7 @@ const DetailComponent = styled.div`
     //border: 1px solid #ddd;
     border-radius: 8px;
     overflow: hidden;
+    background-color: #f3f4f7;
     //box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 `;
 
@@ -28,9 +30,9 @@ const RoomImage = styled.img`
     //display: flex;
     width: 100%;
     margin: 6px;
-    height: 200px;
+    //height: 200px;
     border-radius: 18px;
-    object-fit: cover;
+    //object-fit: cover;
 `;
 
 const RoomDetails = styled.div`
@@ -152,7 +154,7 @@ const MoreDetailComponent = () => {
         <Base>
             <DetailComponent>
                 {/*{JSON.stringify(roomStatus)}*/}
-                <Row className="d-flex m-3">
+                <Row className="d-flex mx-1">
                     {roomDetail?.images.map((image) => (
                         <Col xl={3} lg={3} md={4} sm={5} xs={12}>
                             {/*{JSON.stringify(roomDetail?.images)}*/}
@@ -164,76 +166,88 @@ const MoreDetailComponent = () => {
                     <Col xl={12} lg={12} md={12} sm={12} xs={12}>
                         <RoomDetails>
                             {/*<BookingStatus>{roomStatus.Status}</BookingStatus>*/}
-                            <TYPE>{roomDetail?.room_type}</TYPE>
-                            <Description>{roomDetail?.description}</Description>
-                            <p style={{fontSize: '12px', marginBottom: '4px'}}>
-                                <b>Dimensions:</b> {roomDetail?.dimensions}</p>
-                            <p style={{fontSize: '12px', marginBottom: '4px'}}>
-                                <b>Location:</b> {roomDetail?.location}
-                            </p>
-                            <p style={{fontSize: '12px', marginBottom: '4px'}}>
-                                <b>Google map link:</b> <a href={roomDetail?.google_map}>{roomDetail?.google_map}</a>
-                            </p>
-                            <p style={{fontSize: '12px', marginBottom: '4px'}}><b>Contact
-                                Name:</b> {roomDetail?.contact_name}</p>
-                            <p style={{fontSize: '12px', marginBottom: '4px'}}><b>Contact
-                                No:</b> {roomDetail?.contact_no}</p>
-                            <p style={{fontSize: '12px', marginBottom: '4px'}}><b>Total
-                                Rooms:</b> {roomDetail?.total_rooms}</p>
-                            <Row className="d-flex justify-content-around align-content-center"
-                                 style={{marginBottom: '15px'}}>
-                                <Col>
-                                    {roomDetail?.wifi === 'Y' &&
-                                        <Chip size="small" style={ChipStyle} label="Wifi"/>
-                                    }
-                                    {roomDetail?.car_parking === 'Y' &&
-                                        <Chip size="small" style={ChipStyle} label="Car Parking"/>
-                                    }
-                                    {roomDetail?.meals === 'Y' &&
-                                        <Chip size="small" style={ChipStyle} label="Meals"/>
-                                    }
-                                    {roomDetail?.washing === 'Y' &&
-                                        <Chip size="small" style={ChipStyle} label="Washing"/>
-                                    }
-                                    {roomDetail?.attached_bath === 'Y' &&
-                                        <Chip size="small" style={ChipStyle} label="Attached Bath"/>
-                                    }
-                                    {roomDetail?.room_service === 'Y' &&
-                                        <Chip size="small" style={ChipStyle} label="Room Service"/>
-                                    }
-                                    {/* Price */}
-                                    <Row className="d-flex justify-content-center align-content-center">
-                                        {roomPrice.map(d => (
-                                            <Col className='mt-2'
-                                                 xl={3} lg={3} md={3} sm={4} xs={6}>
-                                                <PriceBollets heading={d.heading} sub_heading={d.sub_heading}
-                                                              amount={d.rent}
-                                                              discount={d.discount}/>
-                                                {isAdmin && (
-                                                    <div style={{
-                                                        border: '1px solid #008374',
-                                                        borderRadius: '8px',
-                                                        textAlign: 'center'
-                                                    }}>
-                                                        <Button color='error' size='small'
-                                                                onClick={() => deleteRoomRate(d._id)}><DeleteIcon/> Delete
-                                                        </Button>
-                                                        <Button color='success' size='small'
-                                                                className='mx-2'
-                                                                onClick={() => gotoUpdateRatePage(d._id)}><EditIcon/> Update</Button>
-                                                    </div>
-                                                )}
-                                            </Col>
-                                        ))
+                            <div style={{
+                                backgroundColor: 'white',
+                                padding: '8px',
+                                borderRadius: '10px',
+                                boxShadow: 'rgba(0, 0, 0, 0.1) 0px 4px 12px',
+                                marginBottom: '8px'
+                            }}>
+                                <TYPE>{roomDetail?.room_type}</TYPE>
+                                <Description>{roomDetail?.description}</Description>
+                                <p style={{fontSize: '12px', marginBottom: '4px'}}>
+                                    <b>Dimensions:</b> {roomDetail?.dimensions}</p>
+                                <p style={{fontSize: '12px', marginBottom: '4px'}}>
+                                    <b>Location:</b> {roomDetail?.location}
+                                </p>
+                                <p style={{fontSize: '12px', marginBottom: '4px'}}>
+                                    <b>Google map link:</b> <a
+                                    href={roomDetail?.google_map}>
+                                    {roomDetail?.google_map.substring(0, 50)}
+                                </a>
+                                </p>
+                                <p style={{fontSize: '12px', marginBottom: '4px'}}><b>Contact
+                                    Name:</b> {roomDetail?.contact_name}</p>
+                                <p style={{fontSize: '12px', marginBottom: '4px'}}><b>Contact
+                                    No:</b> {roomDetail?.contact_no}</p>
+                                <p style={{fontSize: '12px', marginBottom: '4px'}}><b>Total
+                                    Rooms:</b> {roomDetail?.total_rooms}</p>
+                                <hr/>
+                                <h6>Facilities</h6>
+                                <Row className="d-flex justify-content-around align-content-center"
+                                     style={{marginBottom: '15px'}}>
+                                    <Col>
+                                        {roomDetail?.wifi === 'Y' &&
+                                            <Chip size="small" style={ChipStyle} label="Wifi"/>
                                         }
-                                    < /Row>
-                                </Col>
-                            </Row>
-
+                                        {roomDetail?.car_parking === 'Y' &&
+                                            <Chip size="small" style={ChipStyle} label="Car Parking"/>
+                                        }
+                                        {roomDetail?.meals === 'Y' &&
+                                            <Chip size="small" style={ChipStyle} label="Meals"/>
+                                        }
+                                        {roomDetail?.washing === 'Y' &&
+                                            <Chip size="small" style={ChipStyle} label="Washing"/>
+                                        }
+                                        {roomDetail?.attached_bath === 'Y' &&
+                                            <Chip size="small" style={ChipStyle} label="Attached Bath"/>
+                                        }
+                                        {roomDetail?.room_service === 'Y' &&
+                                            <Chip size="small" style={ChipStyle} label="Room Service"/>
+                                        }
+                                    </Col>
+                                </Row>
+                            </div>
+                            {/* Price */}
+                            <Row className="d-flex justify-content-center align-content-center">
+                                {roomPrice.map(d => (
+                                    <Col className='mt-2'
+                                         xl={3} lg={3} md={3} sm={4} xs={6}>
+                                        <PriceBollets heading={d.heading} sub_heading={d.sub_heading}
+                                                      amount={d.rent}
+                                                      discount={d.discount}/>
+                                        {isAdmin && (
+                                            <div style={{
+                                                border: '1px solid #008374',
+                                                borderRadius: '8px',
+                                                textAlign: 'center'
+                                            }}>
+                                                <Button color='error' size='small'
+                                                        onClick={() => deleteRoomRate(d._id)}><DeleteIcon/> Delete
+                                                </Button>
+                                                <Button color='success' size='small'
+                                                        className='mx-2'
+                                                        onClick={() => gotoUpdateRatePage(d._id)}><EditIcon/> Update</Button>
+                                            </div>
+                                        )}
+                                    </Col>
+                                ))
+                                }
+                            < /Row>
                             {/* Button */}
                             <Button variant="contained"
                                     onClick={goToBookingPage}
-                                    style={{borderRadius: '5rem'}}
+                                    style={{borderRadius: '10px', marginTop: '10px'}}
                                 // disabled={roomStatus.Status === 'Booked'}
                             >Booking</Button>
                         </RoomDetails>

@@ -1,3 +1,22 @@
 .acc {
     cursor: pointer;
 }
+
+
+.card, .card-img {
+    overflow: hidden;
+    border-radius: 0;
+    transition: 0.1s ease-in-out;
+}
+
+.card:hover, .card-img:hover {
+    cursor: pointer;
+}
+
+.card img {
+    transition: 0.5s ease-in-out;
+}
+
+.card:hover .card-img img {
+    transform: scale(1.09);
+}

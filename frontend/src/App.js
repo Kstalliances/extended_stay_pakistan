@@ -15,8 +15,11 @@ import ListOfBookedRooms from "./components/user/ListOfBookedRooms";
 import {Users} from "./components/user/Users";
 import {ForgotPassword} from "./components/user/ForgotPassword";
 import {NormalUserRooms} from "./components/user/NormalUserRooms";
+import UpdateRoomImages from "./testing/UpdateRoomImages";
 import {BookingCalender} from "./testing/BookingCalender";
+import DateCalendarServerRequest from "./testing/MeterialUICalender";
 import {UpdateRoomRates} from "./components/post/UpdateRoomRates";
+import MyComponent from "./testing/ids";
 
 function App() {
     // const {t} = useTranslation();
@@ -36,6 +39,7 @@ function App() {
                     <Route path="/about/:aboutUsId" element={<UpdateAbout/>}/>
                     <Route path="/user/forgot-password" element={<ForgotPassword/>}/>
                     <Route path="/booked-rooms/:userId" element={<NormalUserRooms/>}/>
+                    <Route path="/test-id" element={<MyComponent/>}/>
                     <Route path="/user" element={<PrivateRoutes/>}>
                         <Route path="settings" element={<ListOfBookedRooms/>}/>
                         <Route path="add-room" element={<AddRoom/>}/>
