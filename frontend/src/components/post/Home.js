@@ -2,36 +2,18 @@ import React, {useEffect, useReducer, useState} from "react";
 import Base from "../Base";
 import 'react-toastify/dist/ReactToastify.css';
 import {deleteUserRoom, getRoomById, getRooms} from "../../service/roomsservice";
-import {
-    Card,
-    CardBody,
-    CardImg,
-    CardText,
-    CardTitle,
-    Col,
-    Container,
-    Modal,
-    ModalBody,
-    ModalFooter,
-    ModalHeader,
-    Row,
-} from "reactstrap";
-import {Chip, CircularProgress} from "@mui/material";
+import {Card, CardBody, Col, Row,} from "reactstrap";
 import {getUserDetail, isLoggedIn} from "../../service/userservice";
 import {useNavigate} from "react-router-dom";
-
-import Backdrop from '@mui/material/Backdrop';
-import Box from '@mui/material/Box';
-import MUModal from '@mui/material/Modal';
-import Fade from '@mui/material/Fade';
-import Button from '@mui/material/Button';
-import EditIcon from '@mui/icons-material/Edit';
-import Popover from '@mui/material/Popover';
 import '../../style/EditButton.css';
 import {ToastConfig} from "../../config/toastConfig";
 import {toast} from "react-toastify";
+import Button from "@mui/material/Button";
+import {CircularProgress, Popover} from "@mui/material";
+import Backdrop from "@mui/material/Backdrop";
+import EditIcon from "@mui/icons-material/Edit";
 import ImageList from "../../testing/ImageList";
-import ErrorImage from '../../img/error404.jpg';
+import {Modal} from "react-bootstrap";
 
 const style = {
     position: 'absolute',
@@ -62,6 +44,24 @@ const AvatarStyle = {
 
 const DeleteButton = {
     backgroundColor: '#d70000'
+}
+
+const RoomCardStyle = {
+    border: 'none',
+    backgroundColor: '#f3f4f7',
+    // padding: '8px',
+    borderRadius: '20px',
+    display: 'flex',
+    justifyContent: 'center', /* Horizontally center align */
+    // alignItems: 'center',
+    marginBottom: '15px',
+}
+
+const CardInnerStyle = {
+    boxShadow: 'rgba(0, 0, 0, 0.1) 0px 4px 12px',
+    backgroundColor: 'white',
+    borderRadius: '10px',
+    padding: '10px'
 }
 const Home = () => {
 
@@ -265,34 +265,28 @@ const Home = () => {
 
     return (
         <Base>
-            <div style={{margin: '40px'}}>
-                {/* Loading... */}
-                <Backdrop
-                    sx={{color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1}}
-                    open={state?.loading}
-                >
-                    <CircularProgress color="inherit"/>
-                </Backdrop>
-                <Row className="d-flex">
-                    {/* List of rooms */}
-                    {state.rooms &&
-                        state.rooms.map(room => (
-                            <Col xl={3} lg={3} md={4} sm={6} key={room?._id}>
-                                <Card
-                                    className="d-flex justify-content-around align-content-center"
-                                    color="light"
-                                    style={{
-                                        // width: 'rem',
-                                        textAlign: 'left',
-                                        borderRadius: '20px',
-                                        marginBottom: '2rem'
-                                    }}
-                                >
-
-                                    {/*{JSON.stringify(room?.images)}*/}
-                                    <ImageList images={room?.images}/>
-                                    <CardBody>
-                                        {/* Action Button (Update/Delete) */}
+            <Backdrop
+                sx={{color: '#fff', zIndex: (theme) => theme.zIndex.drawer + 1}}
+                open={state?.loading}
+            >
+                <CircularProgress color="inherit"/>
+            </Backdrop>
+            <Row className="d-flex m-2 mt-5">
+                {state.rooms &&
+                    state.rooms.map(room => (
+                        <Col xl={3} lg={3} md={3} sm={6} xs={6} key={room?._id}>
+                            <Card className="text-start" style={RoomCardStyle}>
+                                {/*<img*/}
+                                {/*    onClick={() => moreDetail(room?._id)}*/}
+                                {/*    src={room.images[0]?.room_img_url}*/}
+                                {/*    alt="Image here"*/}
+                                {/*    width="100%"*/}
+                                {/*    // height="150"*/}
+                                {/*    style={{borderTopLeftRadius: '20px', borderTopRightRadius: '20px'}}*/}
+                                {/*/>*/}
+                                <ImageList images={room?.images}/>
+                                <CardBody>
+                                    <div>
                                         {state.is_admin &&
                                             <>
                                                 <EditIcon className="edit_button"
@@ -326,117 +320,49 @@ const Home = () => {
                                                 </Popover>
                                             </>
                                         }
-                                        <CardTitle onClick={() => moreDetail(room?._id)}
-                                                   tag="h5">{room.room_type}</CardTitle>
-                                        <CardText>{room?.description.substring(0, 50)}...
-                                            <span style={{color: "cadetblue", cursor: 'pointer'}}
-                                                  onClick={() => moreDetail(room?._id)}> <u>Read more</u></span>
-                                        </CardText>
-                                        <p style={{fontSize: '12px', marginBottom: '4px'}}>
-                                            <b>Dimensions:</b> {room.dimensions}</p>
+                                        <h6 className="mt-2"
+                                            onClick={() => moreDetail(room?._id)}>{room?.room_type}</h6>
                                         <p style={{fontSize: '12px', marginBottom: '4px'}}>
                                             <b>Location:</b> {room.location}</p>
-                                        <p style={{fontSize: '12px', marginBottom: '4px'}}>
-                                            <b>Google map link:</b> <a
-                                            href={room.google_map}>{room.google_map}</a></p>
                                         <p style={{fontSize: '12px', marginBottom: '4px'}}><b>Contact
                                             Name:</b> {room.contact_name}</p>
                                         <p style={{fontSize: '12px', marginBottom: '4px'}}><b>Contact
                                             No:</b> {room.contact_no}</p>
                                         <p style={{fontSize: '12px', marginBottom: '4px'}}><b>Total
                                             Rooms:</b> {room.total_rooms}</p>
-                                        <hr/>
-                                        <Row className="d-flex justify-content-around align-content-center"
-                                             style={{marginBottom: '15px'}}>
-                                            <h6>Facilities</h6>
-                                            <Col>
-                                                {room?.wifi === 'Y' &&
-                                                    <Chip size="small" style={ChipStyle} label="Wifi"/>
-                                                }
-                                                {room?.car_parking === 'Y' &&
-                                                    <Chip size="small" style={ChipStyle} label="Car Parking"/>
-                                                }
-                                                {room?.meals === 'Y' &&
-                                                    <Chip size="small" style={ChipStyle} label="Meals"/>
-                                                }
-                                                {room?.washing === 'Y' &&
-                                                    <Chip size="small" style={ChipStyle} label="Washing"/>
-                                                }
-                                                {room?.attached_bath === 'Y' &&
-                                                    <Chip size="small" style={ChipStyle} label="Attached Bath"/>
-                                                }
-                                                {room?.room_service === 'Y' &&
-                                                    <Chip size="small" style={ChipStyle} label="Room Service"/>
-                                                }
-                                            </Col>
-                                        </Row>
                                         <Button variant="outlined"
                                                 onClick={() => goToBookingPage(room._id)}
-                                                style={{borderRadius: '5rem'}}>
+                                                style={{borderRadius: '10px', marginTop: "8px"}}>
                                             Booking
                                         </Button>
-                                    </CardBody>
-                                </Card>
-                            </Col>
-                        ))}
-                </Row>
-                <Row>
-                    <MUModal
-                        aria-labelledby="transition-modal-title"
-                        aria-describedby="transition-modal-description"
-                        open={open}
-                        onClose={handleClose}
-                        closeAfterTransition
-                        slots={{backdrop: Backdrop}}
-                        slotProps={{
-                            backdrop: {
-                                timeout: 500,
-                            },
-                        }}
-                    >
-                        <Fade in={open}>
-                            <Box sx={style}>
-                                <Container>
-                                    <CardImg src={state.room_detail?.room_img_url} alt="Image here"/>
-                                </Container>
-                                {/*<Col xl={4} lg={4} md={12}>*/}
-                                {/*</Col>*/}
-                            </Box>
-
-                        </Fade>
-                    </MUModal>
-                </Row>
-                {emptyMessage &&
-                    <Container style={{marginTop: '100px'}}>
-                        <h3>No Content here</h3>
-                    </Container>
-                }
-                {state?.error_image &&
-                    <Container>
-                        <img src={ErrorImage} alt="Image here" width={300}/>
-                        <p>Check your internet connection</p>
-                    </Container>
-                }
-            </div>
+                                    </div>
+                                </CardBody>
+                            </Card>
+                        </Col>
+                    ))}
+            </Row>
             {/* This is for confirmation model  */
             }
             <div>
-                <Modal isOpen={modal} toggle={toggle}>
-                    <ModalHeader toggle={toggle} style={{color: 'red'}}>{error?.errorHeading}</ModalHeader>
-                    <ModalBody>
-                        {error?.errorMessage}
-                    </ModalBody>
-                    <ModalFooter>
+                {/* New Modal */}
+                <Modal show={modal} onHide={toggle}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>{error?.errorHeading}</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <div className="alert alert-danger">{error?.errorMessage}</div>
+                    </Modal.Body>
+                    <Modal.Footer>
                         <Button
-                            variant="contained" onClick={toggle}>
+                            variant="contained" onClick={toggle} style={{borderRadius: '3rem'}}>
                             Cancel
                         </Button>
                         {state.is_room_deleted &&
-                            <Button className="mx-2" style={{backgroundColor: "#ce181e",}}
+                            <Button className="mx-2" style={{backgroundColor: "#ce181e", borderRadius: '3rem'}}
                                     variant="contained" onClick={confirmDeleteRoom}>
                                 Yes
                             </Button>}
-                    </ModalFooter>
+                    </Modal.Footer>
                 </Modal>
             </div>
         </Base>

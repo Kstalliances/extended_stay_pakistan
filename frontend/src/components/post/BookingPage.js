@@ -2,19 +2,7 @@ import Base from "../Base";
 import {useParams} from "react-router-dom";
 import React, {useEffect, useState} from "react";
 import {BookRoom, CalculateTotalAmount, getAccDetail} from "../../service/BookingService";
-import {
-    Card,
-    Col,
-    Container,
-    Form,
-    FormGroup,
-    Label,
-    Modal,
-    ModalBody,
-    ModalFooter,
-    ModalHeader,
-    Row
-} from "reactstrap";
+import {Card, Col, Container, Form, FormGroup, Row} from "reactstrap";
 import Button from "@mui/material/Button";
 import jasscash from "../../img/Jazz-cash.jpg";
 import standard from '../../img/standard.png';
@@ -24,7 +12,8 @@ import "../../style/DatePicker.css";
 import "../../style/general.css";
 import {getRoomDates, getRoomReservedDates} from "../../service/roomsservice";
 import Calendar from "react-calendar";
-import {Alert} from "@mui/material";
+import {Alert, Popover, Skeleton} from "@mui/material";
+import {Modal} from "react-bootstrap";
 
 const RoomCreds = styled.p`
     padding: 12px;
@@ -61,6 +50,14 @@ const HeadingStyle = {
     marginBottom: '20px'
 }
 
+const DateLabel = styled.div`
+    border: 1px solid lightsteelblue;
+    border-radius: 10px;
+    text-align: center;
+    padding: 6px;
+    height: 40px;
+`
+
 export const BookingPage = () => {
     // ----------------- Hooks -----------------
     const {roomId} = useParams();
@@ -77,6 +74,35 @@ export const BookingPage = () => {
     const [success, setSuccess] = useState(false);
     const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
     const [selectedRanges, setSelectedRanges] = useState([]);
+    const [skeleton, setSkeleton] = useState(false);
+
+    // pop over for check in
+    const [anchorEl, setAnchorEl] = React.useState(null);
+
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+    const open = Boolean(anchorEl);
+    const id = open ? 'simple-popover' : undefined;
+
+    // pop over for check out
+    const [anchorElCheckOut, setAnchorElCheckOut] = React.useState(null);
+
+    const handleClickCheckOut = (event) => {
+        setAnchorElCheckOut(event.currentTarget);
+    };
+
+    const handleCloseCheckOut = () => {
+        setAnchorElCheckOut(null);
+    };
+
+    const openCheckOut = Boolean(anchorElCheckOut);
+    const idCheckOut = openCheckOut ? 'simple-popover' : undefined;
 
 
     // ----------------- For Showing Error -----------------
@@ -85,7 +111,7 @@ export const BookingPage = () => {
 
     // ----------------- Handle Rent -----------------
     const handleRate = () => {
-        if (!fromDate && !toDate) {
+        if (!fromDate || !toDate) {
             setModal(!modal);
             setErrorMessage('Select the dates to calculate (Rent)')
         } else {
@@ -93,10 +119,13 @@ export const BookingPage = () => {
                 setModal(!modal);
                 setErrorMessage('Oh no! Start Date cannot be greater than End Date. Please select valid dates.');
             } else {
+                setSkeleton(true);
+                setPaymentDetail('');
                 CalculateTotalAmount(roomId, userId, fromDate, toDate)
                     .then(response => {
                         if (response.status === true) {
                             setPaymentDetail(response.data);
+                            setSkeleton(false);
                         } else {
                             setModal(!modal);
                             setErrorMessage('Start date is greater from end date!');
@@ -150,6 +179,7 @@ export const BookingPage = () => {
     }
 
     const handleFromDate = (d) => {
+        setAnchorEl(null);
         const date = new Date(d);
 
         // Get the parts of the date (year, month, day)
@@ -164,6 +194,7 @@ export const BookingPage = () => {
     }
 
     const handleToDate = (d) => {
+        setAnchorElCheckOut(null);
         const date = new Date(d);
 
         // Get the parts of the date (year, month, day)
@@ -236,7 +267,7 @@ export const BookingPage = () => {
         const isHighlighted = allHighlightedDates.some(d => d.toDateString() === date.toDateString());
 
         const tileStyle = {
-            backgroundColor: isHighlighted ? '#ffcccb' : 'rgba(0, 0, 0, 0.1)', // Set dim color for non-highlighted dates
+            backgroundColor: isHighlighted ? '#f1918e' : 'rgba(0, 0, 0, 0.1)', // Set dim color for non-highlighted dates
             borderRadius: '8px',
             width: '80%',
             height: '80%',
@@ -253,7 +284,7 @@ export const BookingPage = () => {
     return (
         <Base>
             <Row className="d-flex justify-content-around">
-                <Col lg={8}>
+                <Col lg={8} sm={11} xs={11}>
                     <Container className="text-start p-4" style={CardStyle}>
                         <h3 style={HeadingStyle}>Payment</h3>
                         <Row>
@@ -274,7 +305,7 @@ export const BookingPage = () => {
                         </Row>
                     </Container>
                 </Col>
-                <Col lg={8}>
+                <Col lg={8} sm={11} xs={11}>
                     <Container className="text-start p-4" style={CardStyle}>
                         {success &&
                             <Alert style={{
@@ -298,7 +329,7 @@ export const BookingPage = () => {
                         </Card>
                         <Card style={{backgroundColor: 'transparent', border: 'none'}}>
                             <h6 style={{fontSize: '12px'}}>Booked Rooms</h6>
-                            <div style={{width: '40px', height: '20px', backgroundColor: '#ffcccb'}}/>
+                            <div style={{width: '40px', height: '20px', backgroundColor: '#f1918e'}}/>
                         </Card>
 
                         {/*  Calculate rate  */}
@@ -306,43 +337,107 @@ export const BookingPage = () => {
                             <Row>
                                 <Col xl={6} lg={6} md={6} sm={6} xs={12}>
                                     <FormGroup>
-                                        <Label>Check In</Label>
-                                        <Calendar
-                                            // value={fromDate}
-                                            onChange={handleFromDate}
-                                            tileContent={tileContent}
-                                            tileDisabled={({date}) => date < new Date().setHours(0, 0, 0, 0)}
-                                        />
+                                        <Button aria-describedby={id} variant="contained" onClick={handleClick}
+                                                className="mt-3 mb-3" style={{borderRadius: '10px'}}>
+                                            Check In
+                                        </Button>
+                                        <DateLabel>{fromDate}</DateLabel>
+                                        <Popover
+                                            id={id}
+                                            open={open}
+                                            anchorEl={anchorEl}
+                                            onClose={handleClose}
+                                            anchorOrigin={{
+                                                vertical: 'bottom',
+                                                horizontal: 'left',
+                                            }}
+                                        >
+                                            <Calendar
+                                                // value={fromDate}
+                                                onChange={handleFromDate}
+                                                tileContent={tileContent}
+                                                tileDisabled={({date}) => date < new Date().setHours(0, 0, 0, 0)}
+                                            />
+                                        </Popover>
                                     </FormGroup>
                                 </Col>
                                 <Col xl={6} lg={6} md={6} sm={6} xs={12}>
                                     <FormGroup>
-                                        <Label>Check Out</Label>
-                                        <Calendar
-                                            value={toDate}
-                                            onChange={handleToDate}
-                                            tileContent={tileContent}
-                                            tileDisabled={({date}) => date < new Date().setHours(0, 0, 0, 0)}
-                                        />
+                                        <Button aria-describedby={idCheckOut} variant="contained"
+                                                onClick={handleClickCheckOut}
+                                                className="mt-3 mb-3" style={{borderRadius: '10px'}}>
+                                            Check Out
+                                        </Button>
+                                        <DateLabel>{toDate}</DateLabel>
+                                        <Popover
+                                            id={idCheckOut}
+                                            open={openCheckOut}
+                                            anchorEl={anchorElCheckOut}
+                                            onClose={handleCloseCheckOut}
+                                            anchorOrigin={{
+                                                vertical: 'bottom',
+                                                horizontal: 'left',
+                                            }}
+                                        >
+                                            <Calendar
+                                                value={toDate}
+                                                onChange={handleToDate}
+                                                tileContent={tileContent}
+                                                tileDisabled={({date}) => date < new Date().setHours(0, 0, 0, 0)}
+                                            />
+                                        </Popover>
                                     </FormGroup>
                                 </Col>
                                 <Col className="mt-1">
                                     <Button variant="outlined"
-                                            onClick={handleRate}>Calculate</Button>
+                                            onClick={handleRate} style={{borderRadius: '10px'}}>Reserve</Button>
                                     <RoomCreds>
-                                        <h6>Rent (Per Day): {paymentDetail?.rent_per_day}
+                                        <h6 className="d-flex">Rent (Per Day): {paymentDetail?.rent_per_day}
                                             {paymentDetail &&
                                                 <s style={{color: 'lightgray'}}> 3000</s>}
+                                            {skeleton && (
+                                                <Skeleton
+                                                    style={{marginLeft: '5px'}}
+                                                    variant="rounded" width={150} height={20}
+                                                    // animation="wave"
+                                                />
+                                            )}
                                         </h6>
-                                        <h6>Days: {paymentDetail?.number_of_days}</h6>
-                                        <h6>Rent: {paymentDetail?.rent}</h6>
-                                        <h6>Discount: {paymentDetail?.discount}%</h6>
+                                        <h6 className="d-flex">Days: {paymentDetail?.number_of_days} {skeleton && (
+                                            <Skeleton
+                                                style={{marginLeft: '5px'}}
+                                                variant="rounded" width={150} height={20}
+                                                // animation="wave"
+                                            />
+                                        )}</h6>
+                                        <h6 className="d-flex">Rent: {paymentDetail?.rent} {skeleton && (
+                                            <Skeleton
+                                                style={{marginLeft: '5px'}}
+                                                variant="rounded" width={150} height={20}
+                                                // animation="wave"
+                                            />
+                                        )}</h6>
+                                        <h6 className="d-flex">Discount: {paymentDetail?.discount}% {skeleton && (
+                                            <Skeleton
+                                                style={{marginLeft: '5px'}}
+                                                variant="rounded" width={150} height={20}
+                                                // animation="wave"
+                                            />
+                                        )}</h6>
                                         <hr/>
-                                        <h6>Total Amount: <b>{paymentDetail?.amount_after_discount}</b></h6>
+                                        <h6 className="d-flex">Total
+                                            Amount: <b> {paymentDetail?.amount_after_discount}</b> {skeleton && (
+                                                <Skeleton
+                                                    style={{marginLeft: '5px'}}
+                                                    variant="rounded" width={150} height={20}
+                                                    // animation="wave"
+                                                />
+                                            )}</h6>
                                     </RoomCreds>
                                     <Button variant={fromDate === '' || toDate === '' ? 'outlined' : 'contained'}
-                                        // disabled={fromDate === '' || toDate === ''}
-                                            onClick={handleBooking}>Book now</Button>
+                                            onClick={handleBooking} style={{borderRadius: '10px'}}>
+                                        Book now
+                                    </Button>
                                 </Col>
                             </Row>
                         </Form>
@@ -352,18 +447,34 @@ export const BookingPage = () => {
 
 
             <div>
-                <Modal isOpen={modal} toggle={toggle}>
-                    <ModalHeader toggle={toggle} style={{color: 'red'}}>Error</ModalHeader>
-                    <ModalBody>
-                        {errorMessage}
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button style={{backgroundColor: "#ce181e"}}
-                                variant="contained" onClick={toggle}>
+                {/* New Modal */}
+                <Modal show={modal} onHide={toggle}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Error Message</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <div className="alert alert-danger">{errorMessage}</div>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button
+                            variant="contained" onClick={toggle} style={{borderRadius: '10px'}}>
                             Cancel
                         </Button>
-                    </ModalFooter>
+                    </Modal.Footer>
                 </Modal>
+
+                {/*<Modal isOpen={modal} toggle={toggle}>*/}
+                {/*    <ModalHeader toggle={toggle} style={{color: 'red'}}>Error</ModalHeader>*/}
+                {/*    <ModalBody>*/}
+                {/*        {errorMessage}*/}
+                {/*    </ModalBody>*/}
+                {/*    <ModalFooter>*/}
+                {/*        <Button style={{backgroundColor: "#ce181e", borderRadius: '3rem'}}*/}
+                {/*                variant="contained" onClick={toggle}>*/}
+                {/*            Cancel*/}
+                {/*        </Button>*/}
+                {/*    </ModalFooter>*/}
+                {/*</Modal>*/}
             </div>
         </Base>
     )

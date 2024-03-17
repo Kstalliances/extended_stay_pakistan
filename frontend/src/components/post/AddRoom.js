@@ -66,13 +66,14 @@ export const AddRoom = () => {
     const handleFileInput = (event) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
         const file = event?.target?.files[0];
+        if (!file) {
+            toast.error("Select image.", ToastConfig);
+            return;
+        }
         if (!allowedTypes.includes(file.type)) {
-            // show an error message or throw an exception
             toast.error("Only chose jpeg, jpg and png images.", ToastConfig);
             return;
         }
-
-        // console.log(event.target.files[0]);
         // continue with file processing
         if (event.target && event.target.files[0]) {
             // dispatch({type: ACTION.IMAGE, payload: {imageFile: event.target.files[0]}});
@@ -123,6 +124,10 @@ export const AddRoom = () => {
     const handleFileInput2 = (event) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
         const file = event?.target?.files[0];
+        if (!file) {
+            toast.error("Select image.", ToastConfig);
+            return;
+        }
         if (!allowedTypes.includes(file.type)) {
             // show an error message or throw an exception
             toast.error("Only chose jpeg, jpg and png images.", ToastConfig);
@@ -180,6 +185,10 @@ export const AddRoom = () => {
     const handleFileInput3 = (event) => {
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
         const file = event?.target?.files[0];
+        if (!file) {
+            toast.error("Select image.", ToastConfig);
+            return;
+        }
         if (!allowedTypes.includes(file.type)) {
             // show an error message or throw an exception
             toast.error("Only chose jpeg, jpg and png images.", ToastConfig);
@@ -305,7 +314,6 @@ export const AddRoom = () => {
                                     name="file"
                                     id="file"
                                     onChange={handleFileInput}
-                                    required
                                 />
                             </FormGroup>
                             <img src={imageUrl2 !== '' ? imageUrl2 : EmptyImage}
@@ -322,7 +330,6 @@ export const AddRoom = () => {
                                     name="file"
                                     id="file"
                                     onChange={handleFileInput2}
-                                    required
                                 />
                             </FormGroup>
                             <img src={imageUrl3 !== '' ? imageUrl3 : EmptyImage}
@@ -339,7 +346,6 @@ export const AddRoom = () => {
                                     name="file"
                                     id="file"
                                     onChange={handleFileInput3}
-                                    required
                                 />
                             </FormGroup>
                             <FormGroup>

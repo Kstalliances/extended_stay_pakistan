@@ -6,6 +6,7 @@ import React, {useEffect, useReducer, useState} from "react";
 import {useParams} from "react-router-dom";
 import {GetNormalUserBookedRooms} from "../../service/userservice";
 import {deleteRoomFromBookedList} from "../../service/roomsservice";
+import DeleteSweepRoundedIcon from '@mui/icons-material/DeleteSweepRounded';
 
 
 const Approved = () => {
@@ -162,11 +163,11 @@ export function NormalUserRooms() {
                                 <td>
                                     <Button
                                         size='small'
-                                        variant="contained"
+                                        variant="outlined"
                                         color="error"
                                         onClick={() => showDeleteModal(user.room_id, user?.start_date, user?.end_date)}
                                     >
-                                        Delete
+                                        <DeleteSweepRoundedIcon/>
                                     </Button>
                                 </td>
                             </tr>

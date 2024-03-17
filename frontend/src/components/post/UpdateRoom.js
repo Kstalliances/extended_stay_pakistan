@@ -15,7 +15,7 @@ import EmptyImage from '../../img/EmptyImage.PNG';
 
 
 const DefaultImageStyle = {
-    maxWidth: '20%',
+    maxWidth: '30%',
     margin: '10px',
     padding: '8px',
     border: '2px solid #40A2E3',
@@ -23,13 +23,13 @@ const DefaultImageStyle = {
 }
 export const UpdateRoom = () => {
     const {roomId} = useParams();
-    const [publicIds, setPublucIds] = useState('');
     const [image, setImage] = useState(undefined);
     const [image2, setImage2] = useState(undefined);
     const [image3, setImage3] = useState(undefined);
     const [userId, setUserId] = useState();
     const [isRoomAdded, setIsRoomAdded] = useState(false);
     const navigate = useNavigate();
+
     const [imageUrl, setImageUrl] = useState({
         _id: '',
         room_img_url: '',
@@ -45,6 +45,8 @@ export const UpdateRoom = () => {
         room_img_url: '',
         room_img_public_id: ''
     });
+    const [imageIds, setImageIds] = useState([]);
+    const [publicIds, setPublicIds] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loader, setLoader] = useState(false);
 
@@ -53,44 +55,36 @@ export const UpdateRoom = () => {
         setRoom({...room, [field]: actualValue});
     };
 
+    const [data, setData] = useState([]);
     useEffect(() => {
         window.scroll(0, 0);
-        // get single room detail from backend
-        // console.log(roomId);
         getRoomById(roomId)
             .then(response => {
-                // console.log(response?.images);
-                // console.log(`image1: ${image} image2: ${image2} image3: ${image3}`)
-                const publicIds = response?.images?.map(image => image.room_img_public_id);
-
-                // Joining the publicIds into a comma-separated string
-                const publicIdsString = publicIds.join(',');
-                console.log("Public Ids: ", publicIdsString);
-                setPublucIds(publicIdsString);
-
                 setRoom(response);
-                // if (response?.images?.[0] != null) {
-                //     setImageUrl({
-                //         room_img_url: response?.images?.[0].room_img_url,
-                //         room_img_public_id: response?.images?.[0]?.room_img_public_id
-                //     });
-                // }
-                // if (response?.images?.[1] != null) {
-                //     setImageUrl2({
-                //         room_img_url: response?.images?.[1].room_img_url,
-                //         room_img_public_id: response?.images?.[1]?.room_img_public_id
-                //     });
-                // }
-                // if (response?.images?.[3] != null) {
-                //     setImageUrl3({
-                //         room_img_url: response?.images?.[2].room_img_url,
-                //         room_img_public_id: response?.images?.[2]?.room_img_public_id
-                //     });
-                // }
+                if (response?.images?.[0] != null) {
+                    setImageUrl({
+                        _id: response?.images?.[0]._id,
+                        room_img_url: response?.images?.[0].room_img_url,
+                        room_img_public_id: response?.images?.[0]?.room_img_public_id
+                    });
+                }
+                if (response?.images?.[1] != null) {
+                    setImageUrl2({
+                        _id: response?.images?.[1]._id,
+                        room_img_url: response?.images?.[1].room_img_url,
+                        room_img_public_id: response?.images?.[1]?.room_img_public_id
+                    });
+                }
+                if (response?.images?.[2] != null) {
+                    setImageUrl3({
+                        _id: response?.images?.[2]._id,
+                        room_img_url: response?.images?.[2].room_img_url,
+                        room_img_public_id: response?.images?.[2]?.room_img_public_id
+                    });
+                }
                 setLoading(false);
             }).catch(error => {
             toast.error('Error fetching room', ToastConfig);
-            // console.log("Error: ", error)
         });
 
         setUserId(getUserDetail()?.data?.userId);
@@ -189,6 +183,9 @@ export const UpdateRoom = () => {
                 };
             };
             reader.readAsDataURL(selectedFile);
+
+            setImageIds([...imageIds, imageUrl._id]);
+            setPublicIds([...publicIds, imageUrl.room_img_public_id]);
         }
     }
     const handleFileInput2 = (event) => {
@@ -239,6 +236,9 @@ export const UpdateRoom = () => {
                 };
             };
             reader.readAsDataURL(selectedFile);
+
+            setImageIds([...imageIds, imageUrl2._id]);
+            setPublicIds([...publicIds, imageUrl2.room_img_public_id]);
         }
     }
     const handleFileInput3 = (event) => {
@@ -289,11 +289,16 @@ export const UpdateRoom = () => {
                 };
             };
             reader.readAsDataURL(selectedFile);
+            setImageIds([...imageIds, imageUrl3._id]);
+            setPublicIds([...publicIds, imageUrl3.room_img_public_id]);
         }
     }
 
     // add room function
     const updateRoom = (event) => {
+        console.log(imageIds);
+        console.log(publicIds);
+
         setLoader(!loader);
         event.preventDefault();
 
@@ -301,6 +306,7 @@ export const UpdateRoom = () => {
         formData.append('image', image);
         formData.append('image', image2);
         formData.append('image', image3);
+        formData.append('image_ids', imageIds);
         formData.append('room_img_public_ids', publicIds);
 
         for (const key in room) {
@@ -367,7 +373,7 @@ export const UpdateRoom = () => {
                                     type="file"
                                     name="file"
                                     id="file"
-                                    onChange={handleImageChange}
+                                    onChange={handleFileInput}
                                     accept="image/*"
                                 />
                             </FormGroup>
