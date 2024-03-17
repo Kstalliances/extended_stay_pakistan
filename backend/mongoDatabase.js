@@ -10,9 +10,7 @@ class Database {
 
     _connect() {
         mongoose
-            .connect(process.env.DATABASE_URL, {
-                useUnifiedTopology: true,
-            })
+            .connect(process.env.DATABASE_URL)
             .then(() => {
                 console.log('CONNECTED TO MONGODB');
             })
